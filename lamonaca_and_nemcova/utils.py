@@ -101,7 +101,7 @@ def get_peak_height_slope(ppg_signal, timestamps, fps):
     assert(len(bottom_values) == len(peak_values))
     
     #Dirty approximation of the slope could be refined by using points in the middle of the measurements
-    duration = (timestamps[peaks] - timestamps[left_bases])
+    duration = (timestamps[peaks] - timestamps[left_bases]) 
     
     
     slope_rad = np.arctan2(peak_heights, duration)
@@ -157,10 +157,16 @@ def spo2_estimation(ppg_green_940, ppg_red_600, timestamps, fps):
     
     #print("time", timestamps)
     
-    Ehb_600 = 0.81
-    Ehb_940 = 0.18
-    Ehb0_600 = 0.08
-    Ehb0_940 = 0.29
+    #Ehb_600 = 0.81
+    #Ehb_940 = 0.18
+    #Ehb0_600 = 0.08
+    #Ehb0_940 = 0.29
+    
+    #Why those numbers? they seem to contradict the paper I found with the numbers
+    Ehb_600=14.6772;
+    Ehb0_600=3.200;
+    Ehb_940=0.69344;
+    Ehb0_940=1.214;
     
     print("Getting the peaks")
     
@@ -182,18 +188,21 @@ def spo2_estimation(ppg_green_940, ppg_red_600, timestamps, fps):
     #assert(m_940 * math.log10(vp_940) >= 0)
     
     print("Formulation")    
-    log = np.log10(vp_940_imaginary)
-    #print("l", log)
-    #print("m", m_940)
+    log = np.log(vp_940_imaginary)
+    print("mult:", m_940_imaginary, " * ",  log)
     mult = np.multiply(m_940_imaginary, log)
+    print("mres:", mult)
     sqrt_g = np.sqrt(mult)
+    print("sqrt:", sqrt_g)
     
     numerator_1 = (Ehb_600 * sqrt_g)
-    numerator_2 =( Ehb_940 * np.sqrt( np.multiply(m_600_imaginary, np.log10(vp_600_imaginary)))) 
+    numerator_2 =( Ehb_940 * np.sqrt( np.multiply(m_600_imaginary, np.log(vp_600_imaginary)))) 
     numerator = numerator_1 - numerator_2
-    denominator_1 = (np.sqrt( np.multiply(m_940_imaginary, np.log10(vp_940_imaginary))) * (Ehb_600 - Ehb0_600))
-    denominator_2 =(np.sqrt( np.multiply(m_600_imaginary, np.log10(vp_600_imaginary))) * (Ehb_940 - Ehb0_940))
+    denominator_1 = np.sqrt( np.multiply(m_940_imaginary, np.log(vp_940_imaginary))) * (Ehb_600 - Ehb0_600)
+    denominator_2 =np.sqrt( np.multiply(m_600_imaginary, np.log(vp_600_imaginary))) * (Ehb_940 - Ehb0_940)
     denominator = denominator_1 - denominator_2
+    
+    print(numerator , " / ", denominator)
     
     spo2 = np.divide(numerator, denominator)
     
@@ -201,7 +210,9 @@ def spo2_estimation(ppg_green_940, ppg_red_600, timestamps, fps):
     
     spo2 = np.real(spo2)
     
-    spo2 = spo2 * 100
+    #assert((spo2 >= 0).all() and (spo2 <= 1).all())
+    
+    #spo2 = spo2 * 100
     
     hr_940_mean = hr_940.mean()
     hr_600_mean = hr_600.mean()
@@ -209,5 +220,5 @@ def spo2_estimation(ppg_green_940, ppg_red_600, timestamps, fps):
     hr = (hr_940_mean + hr_600_mean) / 2
     
 
-    return spo2.mean(), hr
+    return spo2, hr
 

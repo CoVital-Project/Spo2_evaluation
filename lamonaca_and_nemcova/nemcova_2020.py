@@ -94,8 +94,8 @@ class Nemcova2020(object):
                 
                 if(frame_count % 50 == 0):
                     print("Frame:", frame_count)
-                if frame_count >= 150:
-                    break
+                #if frame_count >= 60:
+                    #break
                 
                 timestamps_list.append(frame_count / fps)
                 
@@ -134,8 +134,8 @@ class Nemcova2020(object):
         up = l + five_sec
         if down < 0:
             down = 0
-        if up >= len(ppg_full_green):
-            up = len(ppg_full_green) - 1
+        if up >= l:
+            up = l - 1
         print("Midddle", l, " from ", down , " to ", up)
         
         ppg_full_green = ppg_full_green[down : up]
@@ -216,6 +216,7 @@ class Nemcova2020(object):
         print("Estimation")
         spo2, hr = utils.spo2_estimation(ppg_green_filtered_normalized, ppg_red_filtered_normalized, timestamps, fps)
         
+        spo2 = np.median(spo2)
         
         if optimize == True:
             print("Before optimization", spo2, hr)
@@ -225,7 +226,7 @@ class Nemcova2020(object):
             
             print(pr, " " , pg, " ", pb)
             
-            spo2 = (spo2 + (pr * 0.25) - (pg * 0.05) - (pb * 0.55)) - 25.9152
+            spo2 = (100 * spo2 + (pr * 0.25) - (pg * 0.05) - (pb * 0.55)) - 25.9152
         
         return spo2, hr
             
