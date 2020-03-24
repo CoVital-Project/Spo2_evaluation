@@ -11,6 +11,19 @@ def getColorComponentsMean(frame, blue = 0, green = 1, red = 2, normalize = Fals
     blue_channel = frame[:,:,blue]
     green_channel = frame[:,:,green]
     red_channel = frame[:,:,red]
+    
+    #red_channel_tmp = frame.copy()
+    #blue_channel_tmp = frame.copy()
+    
+    #red_channel_tmp[:,:,2] = np.zeros([red_channel_tmp.shape[0], red_channel_tmp.shape[1]])
+    #blue_channel_tmp[:,:,0] = np.zeros([blue_channel_tmp.shape[0], blue_channel_tmp.shape[1]])
+    
+    
+    #cv2.imshow("removed red", red_channel_tmp)
+    #cv2.imshow("removed blue", blue_channel_tmp)
+    ##cv2.imshow("green", green_channel)
+    #cv2.waitKey(0)
+    
     if normalize == True:
         
         blue_channel_normalized = cv2.normalize(blue_channel, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
@@ -40,12 +53,12 @@ def get_peak_height_slope(ppg_signal, timestamps, fps):
     
     
     ## distance is 1.5 because it correspond to the time in second for a heart beat at 40 bpm which seemed low for me
-    ## prominence is half the maximum possible amplitude of the signal
+    ## prominence is a parameter
     
     print("finding the peaks", fps * 1.5)
     max_v = np.amax(ppg_signal)
     min_v =np.amin(ppg_signal) 
-    peaks, peaks_properties = signal.find_peaks(ppg_signal, prominence= (max_v - min_v) * 0.3, distance = 1.5)
+    peaks, peaks_properties = signal.find_peaks(ppg_signal, prominence= (max_v - min_v) * 0.2, distance = 1.5)
     
     #Calculate heart beat
     times = timestamps[peaks]
@@ -54,7 +67,7 @@ def get_peak_height_slope(ppg_signal, timestamps, fps):
     print(times_heart_beat)
     heart_beat_s = times_heart_beat.mean()
     
-    print("heart beat in s ", heart_beat_s, " and in minutes ", heart_beat_s * 60 , ' in fps ', heart_beat_s * fps)
+    print("heart beat in s ", heart_beat_s, " and in minutes ", 60 / heart_beat_s )
     
     ## We calculate the base of the peak by only looking for the base between a given peak and the last peak on its left.
     left_base_list = list()
@@ -88,25 +101,33 @@ def get_peak_height_slope(ppg_signal, timestamps, fps):
     assert(len(bottom_values) == len(peak_values))
     
     #Dirty approximation of the slope could be refined by using points in the middle of the measurements
-    duration = timestamps[peaks] - timestamps[left_bases]
+    duration = (timestamps[peaks] - timestamps[left_bases])
     
     
     slope_rad = np.arctan2(peak_heights, duration)
     assert((slope_rad >= 0).all())
+    
+    print("duration", duration)
+    print("height", peak_heights)
+    print("slope in rad", slope_rad)
     #slope_rad = math.atan2( , duration);
     # Convert to degre (?)
     slope = slope_rad * (180/math.pi)
-    
+    print("slope in def", slope)
     
     plt.figure(3)
     plt.plot(timestamps[peaks], ppg_signal[peaks], "ob")
     plt.plot(timestamps[2-1:], ppg_signal[2-1:], 'g')
     plt.plot(timestamps[left_bases], ppg_signal[left_bases], "or")
     plt.legend(['prominence'])
+    
+    for i in range(len(slope)):
+        plt.text(timestamps[left_bases[i]], bottom_values[i], str(slope[i]))
+    
     #plt.subplot(2, 2, 3)
     #plt.show()
     
-    return (peak_heights, slope, heart_beat_s * 60)
+    return (peak_heights, slope, 60 / heart_beat_s)
 
 
 def get_peaks_heights_slopes_average(ppg_signal, timestamps, fps):
@@ -146,7 +167,7 @@ def spo2_estimation(ppg_green_940, ppg_red_600, timestamps, fps):
     vp_940, m_940, hr_940 = get_peak_height_slope(ppg_green_940 ,timestamps, fps)
     vp_600, m_600, hr_600 = get_peak_height_slope(ppg_red_600, timestamps, fps)
     
-    
+    assert(len(vp_940) == len(vp_600))
     
     vp_940_imaginary = np.array(vp_940, dtype=complex)
     m_940_imaginary = np.array(m_940, dtype=complex)

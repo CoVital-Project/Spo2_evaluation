@@ -1,6 +1,6 @@
 # SPO2 Evaluation
 
-<<<<<<< HEAD
+
 # Quick description of the packages:
 
 ## statistical Evaluation:

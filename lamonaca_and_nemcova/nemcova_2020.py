@@ -14,8 +14,8 @@ class Nemcova2020(object):
     def ppg_nemcova(self, frame, blue = 0, green = 1, red = 2):
         #blue_channel_mean, green_channel_mean, red_channel_mean = utils.getColorComponentsMean(frame, blue, green, red)
         blue_channel_mean, green_channel_mean, red_channel_mean = utils.getColorComponentsMean(frame, blue, green, red)
-        
-        return (green_channel_mean, red_channel_mean)
+        #print("means", blue_channel_mean, green_channel_mean, red_channel_mean)
+        return (blue_channel_mean, green_channel_mean, red_channel_mean)
 
     def ppg_filtered(self, frames, sampling_rate):
         vps_green = list()
@@ -72,12 +72,18 @@ class Nemcova2020(object):
     
     
     def ppg_filtered_from_video_file(self, video_file):
-        vps_green = list()
-        vps_red = list()
+        ppg_full_green = list()
+        ppg_full_red = list()
+        ppg_full_blue = list()
         frame_count = 0
         
         cap = cv2.VideoCapture(video_file)
         fps = cap.get(cv2.CAP_PROP_FPS)
+        
+        if fps == 0:
+            fps = 30
+        
+        print("FPS", fps)
         
         timestamps_list = list()
         
@@ -95,39 +101,76 @@ class Nemcova2020(object):
                 
                 frame_count = frame_count + 1
             
-                green_channel_mean, red_channel_mean, = self.ppg_nemcova(frame)
-                vps_green.append(green_channel_mean)
-                vps_red.append(red_channel_mean)
+                blue_channel_mean, green_channel_mean, red_channel_mean = self.ppg_nemcova(frame)
+                ppg_full_green.append(green_channel_mean)
+                ppg_full_red.append(red_channel_mean)
+                ppg_full_blue.append(blue_channel_mean)
             else:
                 break
         
         cap.release()
         
+        print("Video length", frame_count / fps)
+        print("timestamps", timestamps_list)
+        
+        #ppg_full_green.reverse()
+        #ppg_full_red.reverse()
+        #ppg_full_blue.reverse()
+        #timestamps_list.reverse()
+        
+        
+        #Slice ten second in the middle
+        
+        five_sec = 5 * fps
+        print("five sec", five_sec)
+        
+        ppg_full_green = np.asarray(ppg_full_green)
+        ppg_full_red = np.asarray(ppg_full_red)
+        ppg_full_blue = np.asarray(ppg_full_blue)
+        timestamps_list = np.asarray(timestamps_list)
+        
+        l = int(len(ppg_full_green)/2)
+        down = l - five_sec
+        up = l + five_sec
+        if down < 0:
+            down = 0
+        if up >= len(ppg_full_green):
+            up = len(ppg_full_green) - 1
+        print("Midddle", l, " from ", down , " to ", up)
+        
+        ppg_full_green = ppg_full_green[down : up]
+        ppg_full_red = ppg_full_red[down : up]
+        ppg_full_blue = ppg_full_blue[down : up]
+        timestamps_list = timestamps_list[down : up]
+        
+        assert(len(ppg_full_green) == len(ppg_full_red) == len(ppg_full_blue))
+        
+        
         #vps_green_normalized = [(float(i) - min(vps_green))/(max(vps_green) - min(vps_green)) for i in vps_green]
         #vps_red_normalized = [(float(i) - min(vps_red))/(max(vps_red) - min(vps_red)) for i in vps_red]
-        green_absolute_max = max([abs(i) for i in vps_green])
-        red_absolute_max = max([abs(i) for i in vps_red])
+        green_absolute_max = max([abs(i) for i in ppg_full_green])
+        red_absolute_max = max([abs(i) for i in ppg_full_red])
         
         assert(green_absolute_max >= 0)
         assert(red_absolute_max >= 0)
         
-        vps_green_normalized = [float(i)/green_absolute_max for i in vps_green]
-        vps_red_normalized = [float(i)/red_absolute_max for i in vps_red]
+        ppg_green_normalized = [float(i)/green_absolute_max for i in ppg_full_green]
+        ppg_red_normalized = [float(i)/red_absolute_max for i in ppg_full_red]
         
         timestamps = np.array( timestamps_list )
         
         duration = frame_count/fps
         
         # First, design the Buterworth filter
-        vps_green_filtered_normalized = self.cutoff_fir(vps_green_normalized, 3.2, fps)
-        vps_red_filtered_normalized = self.cutoff_fir(vps_red_normalized, 2.2, fps)
+        ppg_green_filtered_normalized = self.cutoff_fir(ppg_green_normalized, 3.2, fps)
+        ppg_red_filtered_normalized = self.cutoff_fir(ppg_red_normalized, 2.2, fps)
         
-        print(len(vps_green_filtered_normalized))
-        vps_green_filtered_normalized = np.delete(vps_green_filtered_normalized, [0])
-        print(len(vps_green_filtered_normalized))
+        print(len(ppg_green_filtered_normalized))
+        ppg_green_filtered_normalized = np.delete(ppg_green_filtered_normalized, [0])
+        print(len(ppg_green_filtered_normalized))
         
-        vps_red_filtered_normalized = np.delete(vps_red_filtered_normalized, [0])
-        print(len(vps_red_filtered_normalized))
+        ppg_red_filtered_normalized = np.delete(ppg_red_filtered_normalized, [0])
+        print(len(ppg_red_filtered_normalized))
         
         timestamps = np.delete(timestamps, [0])
         print(len(timestamps))
@@ -140,16 +183,16 @@ class Nemcova2020(object):
         #print("time", timestamps)
         #print("signal", vps_red_normalized)
         plt.figure(0)
-        plt.plot(timestamps, vps_red_normalized[1:])
-        plt.plot(timestamps, vps_red_filtered_normalized, 'g', linewidth=4)
+        plt.plot(timestamps, ppg_red_normalized[1:])
+        plt.plot(timestamps, ppg_red_filtered_normalized, 'g')
         #plt.plot(timestamps, vps_red[1:], 'b')
 
         plt.xlabel('t')
         plt.grid(True)
         
         plt.figure(1)
-        plt.plot(timestamps, vps_green_normalized[1:])
-        plt.plot(timestamps, vps_green_filtered_normalized, 'g', linewidth=4)
+        plt.plot(timestamps, ppg_green_normalized[1:])
+        plt.plot(timestamps, ppg_green_filtered_normalized, 'g')
         #plt.plot(timestamps, vps_green[1:], 'b')
 
         plt.xlabel('t')
@@ -159,21 +202,38 @@ class Nemcova2020(object):
         
         
         
-        return (vps_green_filtered_normalized, vps_red_filtered_normalized, duration, timestamps, fps)
+        return (ppg_green_filtered_normalized, ppg_full_green, ppg_red_filtered_normalized, ppg_full_red, ppg_full_blue, duration, timestamps, fps)
     
     
-    def spo2_estimation(self, video_frames, timestamps):
-        vps_940_green_filtered, vps_600_red_filtered = self.ppg_filtered(video_frames)
-        return utils.spo2_estimation(vps_940_green_filtered, vps_600_red_filtered, timestamps)
+    #def spo2_estimation(self, video_frames, timestamps):
+        #vps_940_green_filtered, vps_600_red_filtered = self.ppg_filtered(video_frames)
+        #return utils.spo2_estimation(vps_940_green_filtered, vps_600_red_filtered, timestamps)
     
     
-    def spo2_estimation(self, video_file):
-        vps_green_filtered_normalized, vps_red_filtered_normalized, duration, timestamps, fps = self.ppg_filtered_from_video_file(video_file)
+    def spo2_estimation(self, video_file, optimize = True):
+        ppg_green_filtered_normalized, ppg_full_green, ppg_red_filtered_normalized, ppg_full_red, ppg_full_blue, duration, timestamps, fps = self.ppg_filtered_from_video_file(video_file)
         
         print("Estimation")
-        #print("time", timestamps)
+        spo2, hr = utils.spo2_estimation(ppg_green_filtered_normalized, ppg_red_filtered_normalized, timestamps, fps)
         
-        return utils.spo2_estimation(vps_green_filtered_normalized, vps_red_filtered_normalized, timestamps, fps)
+        
+        if optimize == True:
+            print("Before optimization", spo2, hr)
+            pr = np.amax(ppg_full_red) - np.amin(ppg_full_red)
+            pg = np.amax(ppg_full_green) - np.amin(ppg_full_green)
+            pb = np.amax(ppg_full_blue) - np.amin(ppg_full_blue)
+            
+            print(pr, " " , pg, " ", pb)
+            
+            spo2 = (spo2 + (pr * 0.25) - (pg * 0.05) - (pb * 0.55)) - 25.9152
+        
+        return spo2, hr
+            
+            
+            #(SpO 2 × 100 + (P R × 0.25) − (P G × 0.05) − (P B × 0.55)) − 25.9152
+            
+            
+            
         
     
     
