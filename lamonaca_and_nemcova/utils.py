@@ -157,12 +157,6 @@ def spo2_estimation(ppg_green_940, ppg_red_600, timestamps, fps):
     
     #print("time", timestamps)
     
-    #Ehb_600 = 0.81
-    #Ehb_940 = 0.18
-    #Ehb0_600 = 0.08
-    #Ehb0_940 = 0.29
-    
-    #Why those numbers? they seem to contradict the paper I found with the numbers
     Ehb_600=14.6772;
     Ehb0_600=3.200;
     Ehb_940=0.69344;

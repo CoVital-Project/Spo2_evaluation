@@ -121,7 +121,7 @@ class Nemcova2020(object):
         
         #Slice ten second in the middle
         
-        five_sec = 5 * fps
+        five_sec = int(5 * fps)
         print("five sec", five_sec)
         
         ppg_full_green = np.asarray(ppg_full_green)
@@ -134,8 +134,8 @@ class Nemcova2020(object):
         up = l + five_sec
         if down < 0:
             down = 0
-        if up >= l:
-            up = l - 1
+        if up >= len(ppg_full_green):
+            up = len(ppg_full_green) - 1
         print("Midddle", l, " from ", down , " to ", up)
         
         ppg_full_green = ppg_full_green[down : up]
@@ -190,6 +190,8 @@ class Nemcova2020(object):
         plt.xlabel('t')
         plt.grid(True)
         
+        plt.title("PPG signal for the color red")
+        
         plt.figure(1)
         plt.plot(timestamps, ppg_green_normalized[1:])
         plt.plot(timestamps, ppg_green_filtered_normalized, 'g')
@@ -197,8 +199,9 @@ class Nemcova2020(object):
 
         plt.xlabel('t')
         plt.grid(True)
+        plt.title("PPG signal for the color green")
 
-        #plt.show()
+        plt.show()
         
         
         
