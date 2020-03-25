@@ -43,3 +43,52 @@ Step 2 is starting and we need someone to get onto step 3.
 # Quick description of the packages:
 
 Each package has a README describing the use.
+
+
+# Paper reimplemented
+
+> @INPROCEEDINGS{7145228, 
+> author={F. {Lamonaca} and D. L. {Carnì} and D. {Grimaldi} and A. {Nastro} and M. {Riccio} and V. {Spagnolo}}, 
+> booktitle={2015 IEEE International Symposium on Medical Measurements and Applications (MeMeA) Proceedings}, 
+> title={Blood oxygen saturation measurement by smartphone camera}, 
+> year={2015}, 
+> volume={}, 
+> number={}, 
+> pages={359-364},} 
+
+
+> @article{NEMCOVA2020101928,
+> title = "Monitoring of heart rate, blood oxygen saturation, and blood pressure using a smartphone",
+> journal = "Biomedical Signal Processing and Control",
+> volume = "59",
+> pages = "101928",
+> year = "2020",
+> issn = "1746-8094",
+> doi = "https://doi.org/10.1016/j.bspc.2020.101928",
+> url = "http://www.sciencedirect.com/science/article/pii/S1746809420300847",
+> author = "Andrea Nemcova and Ivana Jordanova and Martin Varecka and Radovan Smisek and Lucie Marsanova and Lukas Smital > and Martin Vitek",
+> keywords = "Heart rate, Blood oxygen saturation, Blood pressure, Photoplethysmogram, Health monitoring, Smartphone, Android application",
+> }
+
+> @INPROCEEDINGS{6959086, author={A. K. {Kanva} and C. J. {Sharma} and S. {Deb}}, booktitle={Proceedings of The 2014 International Conference on Control, Instrumentation, Energy and Communication (CIEC)}, title={Determination of SpO2 and heart-rate using smartphone camera}, year={2014}, volume={}, number={}, pages={237-241},} 
+
+# Paper to review/reimplement
+
+> @INPROCEEDINGS{8037323, author={E. J. {Wang} and W. {Li} and J. {Zhu} and R. {Rana} and S. N. {Patel}}, booktitle={2017 39th Annual International Conference of the IEEE Engineering in Medicine and Biology Society (EMBC)}, title={Noninvasive hemoglobin measurement using unmodified smartphone camera and white flash}, year={2017}, volume={}, number={}, pages={2333-2336},} 
+
+> @inproceedings{10.1145/2971648.2971653,
+> author = {Wang, Edward Jay and Li, William and Hawkins, Doug and Gernsheimer, Terry and Norby-Slycord, Colette and Patel, Shwetak N.},
+> title = {HemaApp: Noninvasive Blood Screening of Hemoglobin Using Smartphone Cameras},
+> year = {2016},
+> isbn = {9781450344616},
+> publisher = {Association for Computing Machinery},
+> address = {New York, NY, USA},
+> url = {https://doi.org/10.1145/2971648.2971653},
+> doi = {10.1145/2971648.2971653},
+> booktitle = {Proceedings of the 2016 ACM International Joint Conference on Pervasive and Ubiquitous Computing},
+> pages = {593–604},
+> numpages = {12},
+> keywords = {anemia, hemoglobin, photoplethysmography, camera, mobile health, blood screening},
+> location = {Heidelberg, Germany},
+> series = {UbiComp ’16}
+> }
