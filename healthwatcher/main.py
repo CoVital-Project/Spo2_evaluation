@@ -2,8 +2,14 @@
 
 import torchvision
 from matplotlib import pyplot as plt
+from Spo2Dataset import Spo2Dataset
+from torch.utils.data import DataLoader
 
-v, _, meta = torchvision.io.read_video('../data/S98T89.mp4', pts_unit="sec")  ## assumes it's being run from `healthwatcher` directory
+dataset = Spo2Dataset('../data')
+dataloader = DataLoader(dataset, batch_size=4,
+                        shuffle=True)
+v, meta, gt = dataset[0]# = torchvision.io.read_video('../data/S98T89.mp4', pts_unit="sec")  ## assumes it's being run from `healthwatcher` directory
+print(gt)
 print(meta)
 fps = meta['video_fps']
 

@@ -1,12 +1,11 @@
-
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 import torchvision
 import os
 import json
 import torch
 
 class Spo2Dataset(Dataset):
-    """Face Landmarks dataset."""
+    """Spo2Dataset dataset."""
 
     def __init__(self, data_path):
         """
@@ -30,6 +29,3 @@ class Spo2Dataset(Dataset):
         v, _, meta = torchvision.io.read_video(video_file, pts_unit="sec")  ## assumes it's being run from `healthwatcher` directory
 
         return [v,meta,ground_truth]
-
-dataset = Spo2Dataset('data')
-print(dataset[0])
