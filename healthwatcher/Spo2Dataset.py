@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset, DataLoader
+
 import torchvision
 import os
 import json
@@ -27,13 +28,16 @@ class Spo2Dataset(Dataset):
         with open(os.path.join(video_path, 'gt.json'), 'r') as f:
             ground_truth = json.load(f)
         v, _, meta = torchvision.io.read_video(video_file, pts_unit="sec")
-        blue=0
-        green=1
-        red=2
+
+        v = v.float()
+        #v = v/255
 
         v.resize_(v.shape[0], v.shape[1]*v.shape[2], v.shape[3])
-
-        v = torch.stack([v.float().mean(dim=1), v.float().std(dim=1)]).reshape(-1,3,2)
+        '''if torch.cuda.is_available():
+            v = v.to(device='cuda')'''
+        mean = v.mean(dim=1)
+        std = v.std(dim=1)
+        v = torch.stack([mean, std]).reshape(-1,3,2)
         labels = torch.Tensor([int(ground_truth['Spo2']), int(ground_truth['heart_rate'])])
         return [v,meta,labels]
 
@@ -57,7 +61,7 @@ class Spo2DataLoader(DataLoader):
 if __name__== "__main__":
 
     dataset = Spo2Dataset('data')
-    dataloader = Spo2DataLoader(dataset, batch_size=2, collate_fn= Spo2DataLoader.collate_fn)
+    dataloader = Spo2DataLoader(dataset, batch_size=4, collate_fn= Spo2DataLoader.collate_fn)
     for videos_batch, labels_batch, videos_lengths in dataloader:
         print('Padded video (length, color, (mean,std)): ', videos_batch[0].shape)
         print('Video original length: ', videos_lengths[0])

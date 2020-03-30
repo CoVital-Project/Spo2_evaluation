@@ -1,15 +1,7 @@
-#method of Scully et al.: "Physiological Parameter monitoring from optical recordings with a mobile phone"
-
 import torchvision
 from matplotlib import pyplot as plt
-from Spo2Dataset import Spo2Dataset
 
-dataset = Spo2Dataset('../data')
-
-v, meta, gt = dataset[0]# = torchvision.io.read_video('../data/S98T89.mp4', pts_unit="sec")  ## assumes it's being run from `healthwatcher` directory
-v, meta, gt = torchvision.io.read_video('../data/S98T89.mp4', pts_unit="sec")  ## assumes it's being run from `healthwatcher` directory
-
-print(gt)
+v, _, meta = torchvision.io.read_video('../data/S98T89.mp4', pts_unit="sec")  ## assumes it's being run from `healthwatcher` directory
 print(meta)
 fps = meta['video_fps']
 
@@ -19,15 +11,15 @@ red=2
 
 print(meta)
 
-#v.resize_(v.shape[0], v.shape[1]*v.shape[2], v.shape[3])    # smash width and height together
+v.resize_(v.shape[0], v.shape[1]*v.shape[2], v.shape[3])    # smash width and height together
 
-#bc, gc, rc = v[:,:,blue].float(), v[:,:,green].float(), v[:,:,red].float()  # get separate channels
+bc, gc, rc = v[:,:,blue].float(), v[:,:,green].float(), v[:,:,red].float()  # get separate channels
 
-bc_mean = v[:,blue,0]    # calc mean and std for each channel
-bc_std = v[:,blue,1]
+bc_mean = bc.mean(dim=1)    # calc mean and std for each channel
+bc_std = bc.std(dim=1)
 
-rc_mean= v[:,red,0]
-rc_std = v[:,red,1]
+rc_mean=rc.mean(dim=1)
+rc_std = rc.std(dim=1)
 
 A=100 # From "determination of spo2 and heart-rate using smartphone camera
 B=5
@@ -49,6 +41,3 @@ x = [i for i in range(len(spo2_smooth))]
 plt.figure()
 plt.plot(x, spo2_smooth)
 plt.show()
-
-
-
