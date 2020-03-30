@@ -19,6 +19,12 @@ Git LFS uses the `.gitattributes` file to specify what must be tracked. Currentl
 sample_data/**/*.mp4 filter=lfs diff=lfs merge=lfs -text
 ```
 
+### Checking what's tracked by LFS
+
+```
+git ls-files ':(attr:filter=lfs)'
+```
+
 You can append entries to the file, or use the CLI to track more files. Read more about how to track and add files using LFS [here](https://help.github.com/en/github/managing-large-files/configuring-git-large-file-storage).
 
 ### Oh shit, I think I broke it
