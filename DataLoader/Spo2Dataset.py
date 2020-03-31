@@ -84,8 +84,10 @@ class Spo2Dataset(Dataset):
         self.labels_list = []
         self.meta_list = []
         
+        nb_video = 1
         for video in self.video_folders:
-            print("video")
+            print("Loading video:", nb_video)
+            nb_video += 1
             ppg = []
             video_path = os.path.join(self.data_path, video)
             video_file = os.path.join(video_path, [file_name for file_name in os.listdir(video_path) if file_name.endswith('mp4')][0])
@@ -93,14 +95,14 @@ class Spo2Dataset(Dataset):
             meta = {}
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
             (grabbed, frame) = vidcap.read()
-            frame_count = 0
+            #frame_count = 0
             while grabbed:
                 frame = self.transform_faster(frame)
                 ppg.append(frame)
                 (grabbed, frame) = vidcap.read()
-                if(frame_count % 50 == 0):
-                    print("Frame:", frame_count)
-                frame_count += 1
+                #if(frame_count % 50 == 0):
+                    #print("Frame:", frame_count)
+                #frame_count += 1
             with open(os.path.join(video_path, 'gt.json'), 'r') as f:
                 ground_truth = json.load(f)
 
@@ -108,7 +110,6 @@ class Spo2Dataset(Dataset):
             self.videos_ppg.append(torch.Tensor(np.array(ppg)))
             self.meta_list.append(meta)
             self.labels_list.append(labels)
-            print("done")
     def __len__(self):
         return len(self.video_folders)
 
@@ -136,7 +137,7 @@ class Spo2DataLoader(DataLoader):
         return videos_tensor, labels_tensor, torch.Tensor(videos_length)
 
 if __name__== "__main__":
-    dataset = Spo2Dataset('test_data')
+    dataset = Spo2Dataset('sample_data')
     dataloader = Spo2DataLoader(dataset, batch_size=4, collate_fn= Spo2DataLoader.collate_fn)
     for videos_batch, labels_batch, videos_lengths in dataloader:
         print('Padded video (length, color, (mean,std)): ', videos_batch[0].shape)
