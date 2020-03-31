@@ -1,3 +1,5 @@
+#method of Scully et al.: "Physiological Parameter monitoring from optical recordings with a mobile phone"
+
 import torchvision
 from matplotlib import pyplot as plt
 
@@ -41,3 +43,4 @@ x = [i for i in range(len(spo2_smooth))]
 plt.figure()
 plt.plot(x, spo2_smooth)
 plt.show()
+
