@@ -9,6 +9,35 @@ from threading import Thread
 from queue import Queue
 import time
 
+class VideoGet:
+    """
+    Class that continuously gets frames from a VideoCapture object
+    with a dedicated thread.
+    It stores the frames in a list.
+    It adds new frames only when there is less than a 100 in the "stack" to help overcome memory issues.
+    """
+
+    def __init__(self, src=0, stack_size = 80):
+        self.stream = cv2.VideoCapture(src)
+        self.stack_size = stack_size
+        (self.grabbed, self.frame) = self.stream.read()
+        self.stopped = False
+        self.frames = [self.frame]
+        self.fps = self.stream.get(cv2.CAP_PROP_FPS)
+    def start(self):
+        Thread(target=self.get, args=()).start()
+        return self
+
+    def get(self):
+        while not self.stopped:
+            if not self.grabbed:
+                self.stop()
+            elif len(self.frames) < self.stack_size:
+                (self.grabbed, self.frame) = self.stream.read()
+                self.frames.append(self.frame)
+
+    def stop(self):
+        self.stopped = True
 
 class Spo2Dataset(Dataset):
     """Spo2Dataset dataset.
@@ -16,8 +45,8 @@ class Spo2Dataset(Dataset):
         The process is slow so it may take a while to create the Dataset when first initated.
     """
     def transform(self,frame):
-        frame = frame.reshape(-1,3)
-        return np.array([frame.mean(axis=0), frame.std(axis=0)]).T
+        frame = frame.reshape(len(frame),-1,3)
+        return np.array([frame.mean(axis=1), frame.std(axis=1)]).reshape(len(frame),3,2)
     def __init__(self, data_path):
         """
         Args:
@@ -33,17 +62,22 @@ class Spo2Dataset(Dataset):
             ppg = []
             video_path = os.path.join(self.data_path, video)
             video_file = os.path.join(video_path, [file_name for file_name in os.listdir(video_path) if file_name.endswith('mp4')][0])
-            vidcap = cv2.VideoCapture(video_file)
+            vidcap = VideoGet(video_file).start()
             meta = {}
-            meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
-            (grabbed, frame) = vidcap.read()
-            while grabbed:
-                frame = self.transform(frame)
-                ppg.append(frame)
-                (grabbed, frame) = vidcap.read()
+            meta['video_fps'] = vidcap.fps
+            while True:
+                if vidcap.stopped and len(vidcap.frames)==1:
+                    vidcap.stop()
+                    break
+                if len(vidcap.frames)>1:
+                    frames = np.array(vidcap.frames[:-1])
+                    vidcap.frames = vidcap.frames[len(frames):]
+                    frame = self.transform(frames)
+                    ppg.extend(frame)
+
             with open(os.path.join(video_path, 'gt.json'), 'r') as f:
                 ground_truth = json.load(f)
-
+            
             labels = torch.Tensor([int(ground_truth['SpO2']), int(ground_truth['HR'])])
             self.videos_ppg.append(torch.Tensor(np.array(ppg)))
             self.meta_list.append(meta)
