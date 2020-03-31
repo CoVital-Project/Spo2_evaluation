@@ -44,5 +44,3 @@ plt.figure()
 plt.plot(x, spo2_smooth)
 plt.show()
 
-
-
