@@ -1,0 +1,12 @@
+RecordTimestamp,PatientID,SpO2,HR,PhoneMake,PhoneModel,VideoFilename,DeviceMake,DeviceModel,Notes
+2020-03-27 15:15,SA001,98,63,Apple,iPhone 8,PC000001.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-27 15:18,SA001,98,66,Apple,iPhone 8,PC000002.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-27 15:20,SA001,98,69,Apple,iPhone 8,PC000003.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-27 15:37,SA001,98,67,Apple,iPhone 8,PC000004.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-27 16:38,SA001,97,78,Apple,iPhone 8,PC000005.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-27 19:44,SA001,97,72,Apple,iPhone 8,PC000006.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-28 00:35,SA001,96,65,Apple,iPhone 8,PC000007.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-28 13:45,SA001,95,65,Apple,iPhone 8,PC000008.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-29 13:18,SA001,99,61,Apple,iPhone 8,PC000009.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-29 13:20,SA002,97,60,Apple,iPhone 8,PC000010.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
+2020-03-29 13:24,SA003,95,51,Apple,iPhone 8,PC000011.mp4,Beurer GmbH,PO 30,Phone on first right finger. Phone cover on. Device on first left finger. 
