@@ -42,9 +42,6 @@ def getColorComponentsMean(frame, blue = 0, green = 1, red = 2, normalize = Fals
     return (blue_channel_mean, green_channel_mean, red_channel_mean)
 
 
-
-
-
 def ppg(frames, timestamps):
     vps_green = list()
     vps_red = list()

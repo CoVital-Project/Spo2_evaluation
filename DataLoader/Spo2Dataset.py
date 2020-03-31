@@ -9,15 +9,70 @@ from threading import Thread
 from queue import Queue
 import time
 
+#def timing(f):
+    #def wrap(*args):
+        #time1 = time.time()
+        #ret = f(*args)
+        #time2 = time.time()
+        #print('{:s} function took {:.3f} ms'.format(f.__name__, (time2-time1)*1000.0))
+
+        #return ret
+    #return wrap
+
 
 class Spo2Dataset(Dataset):
     """Spo2Dataset dataset.
         It preprocess the data in order to create a Dataset with the average and std of each channel per frame. 
         The process is slow so it may take a while to create the Dataset when first initated.
-    """
-    def transform(self,frame):
-        frame = frame.reshape(-1,3)
+    """    
+    #@timing
+    def reshape(self, frame):
+        return frame.reshape(-1,3)
+    
+    #@timing
+    def mean_t(self, frame):
         return np.array([frame.mean(axis=0), frame.std(axis=0)]).T
+    
+    #@timing
+    def transform(self,frame):
+        frame = self.reshape(frame)
+        ret = self.mean_t(frame)
+        return ret
+    
+    #@timing
+    def get_channels(self, frame, blue = 0, green = 1, red = 2):
+        blue_channel = frame[:,:,blue]
+        green_channel = frame[:,:,green]
+        red_channel = frame[:,:,red]
+        
+        return blue_channel, green_channel, red_channel
+    
+    #@timing
+    def mean_fast(self, blue_channel, green_channel, red_channel):
+        blue_channel_mean = blue_channel.mean()
+        green_channel_mean = green_channel.mean()
+        red_channel_mean = red_channel.mean()
+        
+        return blue_channel_mean, green_channel_mean, red_channel_mean
+    
+    #@timing
+    def std_fast(self, blue_channel, green_channel, red_channel):
+        blue_channel_mean = blue_channel.std()
+        green_channel_mean = green_channel.std()
+        red_channel_mean = red_channel.std()
+        
+        return blue_channel_mean, green_channel_mean, red_channel_mean
+    
+    #@timing
+    def transform_faster(self, frame):
+        blue_channel, green_channel, red_channel = self.get_channels(frame)       
+        blue_channel_mean, green_channel_mean, red_channel_mean = self.mean_fast(blue_channel, green_channel, red_channel)
+        blue_channel_std, green_channel_std, red_channel_std = self.std_fast(blue_channel, green_channel, red_channel)
+        
+        return np.array([[blue_channel_mean, blue_channel_std],
+                         [green_channel_mean, green_channel_std],
+                         [red_channel_mean, red_channel_std]])
+    
     def __init__(self, data_path):
         """
         Args:
@@ -30,6 +85,7 @@ class Spo2Dataset(Dataset):
         self.meta_list = []
         
         for video in self.video_folders:
+            print("video")
             ppg = []
             video_path = os.path.join(self.data_path, video)
             video_file = os.path.join(video_path, [file_name for file_name in os.listdir(video_path) if file_name.endswith('mp4')][0])
@@ -37,10 +93,14 @@ class Spo2Dataset(Dataset):
             meta = {}
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
             (grabbed, frame) = vidcap.read()
+            frame_count = 0
             while grabbed:
-                frame = self.transform(frame)
+                frame = self.transform_faster(frame)
                 ppg.append(frame)
                 (grabbed, frame) = vidcap.read()
+                if(frame_count % 50 == 0):
+                    print("Frame:", frame_count)
+                frame_count += 1
             with open(os.path.join(video_path, 'gt.json'), 'r') as f:
                 ground_truth = json.load(f)
 
@@ -48,6 +108,7 @@ class Spo2Dataset(Dataset):
             self.videos_ppg.append(torch.Tensor(np.array(ppg)))
             self.meta_list.append(meta)
             self.labels_list.append(labels)
+            print("done")
     def __len__(self):
         return len(self.video_folders)
 
@@ -75,7 +136,7 @@ class Spo2DataLoader(DataLoader):
         return videos_tensor, labels_tensor, torch.Tensor(videos_length)
 
 if __name__== "__main__":
-    dataset = Spo2Dataset('sample_data')
+    dataset = Spo2Dataset('test_data')
     dataloader = Spo2DataLoader(dataset, batch_size=4, collate_fn= Spo2DataLoader.collate_fn)
     for videos_batch, labels_batch, videos_lengths in dataloader:
         print('Padded video (length, color, (mean,std)): ', videos_batch[0].shape)
