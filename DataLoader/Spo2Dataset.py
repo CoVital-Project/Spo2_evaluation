@@ -30,6 +30,13 @@ class Spo2Dataset(Dataset):
         return frame.reshape(-1,3)
     
     #@timing
+    def rescale_frame(self,frame, percent=50):
+        width = int(frame.shape[1] * percent/ 100)
+        height = int(frame.shape[0] * percent/ 100)
+        dim = (width, height)
+        return cv2.resize(frame, dim, interpolation =cv2.INTER_AREA)
+
+    #@timing
     def mean_t(self, frame):
         return np.array([frame.mean(axis=0), frame.std(axis=0)]).T
     
@@ -95,14 +102,16 @@ class Spo2Dataset(Dataset):
             meta = {}
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
             (grabbed, frame) = vidcap.read()
-            #frame_count = 0
+            frame_count = 0
             while grabbed:
+                #Comment next line if you want to skip rescaling
+                frame = self.rescale_frame(frame)
                 frame = self.transform_faster(frame)
                 ppg.append(frame)
                 (grabbed, frame) = vidcap.read()
-                #if(frame_count % 50 == 0):
-                    #print("Frame:", frame_count)
-                #frame_count += 1
+                if(frame_count % 50 == 0):
+                    print("Frame:", frame_count)
+                frame_count += 1
             with open(os.path.join(video_path, 'gt.json'), 'r') as f:
                 ground_truth = json.load(f)
 
