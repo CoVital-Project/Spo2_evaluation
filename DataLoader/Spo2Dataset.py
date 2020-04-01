@@ -102,16 +102,16 @@ class Spo2Dataset(Dataset):
             meta = {}
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
             (grabbed, frame) = vidcap.read()
-            frame_count = 0
+            #frame_count = 0
             while grabbed:
                 #Comment next line if you want to skip rescaling
                 frame = self.rescale_frame(frame)
                 frame = self.transform_faster(frame)
                 ppg.append(frame)
                 (grabbed, frame) = vidcap.read()
-                if(frame_count % 50 == 0):
-                    print("Frame:", frame_count)
-                frame_count += 1
+                #if(frame_count % 50 == 0):
+                    #print("Frame:", frame_count)
+                #frame_count += 1
             with open(os.path.join(video_path, 'gt.json'), 'r') as f:
                 ground_truth = json.load(f)
 
