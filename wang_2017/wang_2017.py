@@ -4,7 +4,7 @@ import numpy as np
 import math
 
 import utils
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import scipy
 
 
@@ -173,6 +173,139 @@ class Wang2017(object):
 
         return hr
     
+    
+    def find_peaks(self, ppg_signal, timestamps, heart_rate_in_millisec):
+        
+        # gets a subset of the peaks
+        max_v = np.amax(ppg_signal)
+        min_v =np.amin(ppg_signal) 
+        peaks, peaks_properties = signal.find_peaks(ppg_signal)
+        
+        paeks_filtered = self.remove_extraneous_peaks(ppg_signal, peaks, timestamps, heart_rate_in_millisec)
+       
+        # use the heart rate to increase the accuracy
+        ## Remove peaks that are too close
+        
+        
+    def remove_extraneous_peaks(self, ppg_signal, peaks, timestamps, heart_rate_in_millisec):
+        ##Find peak with maximum amplitude and use it as base
+        
+        
+        peak_values = ppg_signal[peaks]
+        max_peak = np.amax(peak_values)
+        max_peak_position = np.argmax(peak_values)
+        print("Max peak position", max_peak_position, " for peak", max_peak, "in peaks", peak_values)
+        
+        
+        diff_between_peaks = np.diff(timestamps)
+        print(timestamps, "Diff", diff_between_peaks, " with ", heart_rate_in_millisec)
+        
+        _, peaks, _ = self.remove_extraneous_peaks_from_a_peak(diff_between_peaks, peaks, max_peak_position, heart_rate_in_millisec)
+        return peaks
+        
+       
+    def remove_extraneous_peaks_from_a_peak(self, diff_between_peaks, peaks, original_peak_position, heart_rate_in_millisec):
+        print("PEAKS", peaks)
+        print("Remove above")
+        studied_peak_position = original_peak_position
+        while studied_peak_position < len(peaks):
+            diff_between_peaks, peaks = self.remove_extraneous_peaks_above_a_peak(diff_between_peaks, peaks, studied_peak_position, heart_rate_in_millisec)
+            
+            print("step", diff_between_peaks, peaks)
+            studied_peak_position += 1
+            
+        removed_under = 0
+        studied_peak_position = original_peak_position
+        print("Remove Under")
+        while studied_peak_position > 0:
+            print("Psotion ", studied_peak_position)
+            diff_between_peaks, peaks, studied_peak_position_tmp = self.remove_extraneous_peaks_under_a_peak(diff_between_peaks, peaks, studied_peak_position, heart_rate_in_millisec)
+            removed_under = removed_under + abs(studied_peak_position_tmp - studied_peak_position)
+            print("Remove under ", removed_under)
+            studied_peak_position = studied_peak_position_tmp
+            studied_peak_position -= 1
+            print("New main position ", studied_peak_position)
+            
+        return diff_between_peaks, peaks, abs(original_peak_position - removed_under)    
+        
+    def remove_extraneous_peaks_above_a_peak(self, diff_between_peaks, peaks, peak_position, heart_rate_in_millisec):
+        #Above
+        if(peak_position == len(peaks) - 1):
+            print("last element")
+            return diff_between_peaks.copy(), peaks.copy()
+            
+        above = peak_position
+        time_added = diff_between_peaks[above]
+        print(time_added, " == ",  diff_between_peaks[above])
+        assert(time_added == diff_between_peaks[above])
+        if time_added >= heart_rate_in_millisec:
+            print("already good time:", time_added, " ", heart_rate_in_millisec)
+            return diff_between_peaks.copy(), peaks.copy()
+        
+        to_remove = list()
+        while(time_added < heart_rate_in_millisec):
+            print(time_added , " and ", heart_rate_in_millisec, " so remove one at ", above)
+            to_remove.append(above)
+            above = above + 1
+            if above == len(diff_between_peaks):
+                print("last element in loop")
+                break
+            time_added = time_added + diff_between_peaks[above]
+        
+        
+        print("Remove all elements", to_remove)
+        to_remove = np.asarray(to_remove)
+        peaks_copy = np.delete(peaks, to_remove + 1)
+        diff_between_peaks_copy = np.delete(diff_between_peaks, to_remove)
+        if peak_position < len(diff_between_peaks_copy):
+            diff_between_peaks_copy[peak_position] = time_added
+        
+        print("diff peak", diff_between_peaks_copy)
+        
+        return diff_between_peaks_copy, peaks_copy
+            
+            
+            
+    def remove_extraneous_peaks_under_a_peak(self, diff_between_peaks, peaks, peak_position, heart_rate_in_sec):
+        #Above
+        
+        assert(peak_position < len(peaks))
+        
+        if(peak_position == 0):
+            print("last element")
+            return diff_between_peaks.copy(), peaks.copy(), peak_position
+            
+        under = peak_position - 1
+        time_added = diff_between_peaks[under]
+        if time_added >= heart_rate_in_sec:
+            print("already good time:", time_added, " ", heart_rate_in_sec)
+            return diff_between_peaks.copy(), peaks.copy(), peak_position
+        
+        to_remove = list()
+        while(time_added < heart_rate_in_sec):
+            print("remove one")
+            to_remove.append(under)
+            under = under - 1
+            if under == -1:
+                print("last element in loop")
+                break
+            time_added = time_added + diff_between_peaks[under]
+            
+        print("Remove all elements", to_remove)
+        peaks_copy = np.delete(peaks, to_remove)
+        diff_between_peaks_copy = np.delete(diff_between_peaks, to_remove)
+        new_peak_position = peak_position - len(to_remove)
+        
+        print("new position of peak:" , new_peak_position)
+        assert(new_peak_position >= 0)
+        if new_peak_position > 0:
+            print(new_peak_position - 1)
+            diff_between_peaks_copy[new_peak_position - 1] = time_added
+        
+        print("diff peak", diff_between_peaks_copy)
+        
+        return diff_between_peaks_copy, peaks_copy, new_peak_position
+        
     
     def spo2_estimation(self, video_file, optimize = True):
         ppg_green_filtered_normalized, ppg_full_green, ppg_red_filtered_normalized, ppg_full_red, ppg_full_blue, duration, timestamps, fps = self.ppg_filtered_from_video_file(video_file)
