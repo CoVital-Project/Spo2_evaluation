@@ -16,15 +16,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.7
+    - name: Set up Python 3.8
       uses: actions/setup-python@v1
       with:
-        python-version: 3.7
+        python-version: 3.8
     - name: Install ffmpeg and pkg-config
       run: |
         sudo apt-get update
         sudo apt-get install ffmpeg
-        sudo apt-get install gcc
         sudo apt-get install -y pkg-config
         sudo apt-get install -y libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libswscale-dev libavresample-dev libavfilter-dev
     - name: Install dependencies
