@@ -20,6 +20,8 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.8
+    - name: ffmpeg
+      run: sudo apt-get install ffmpeg
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
