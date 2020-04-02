@@ -32,6 +32,8 @@ class Spo2Dataset(Dataset):
         """
         Args:
             data_path (string): Path to the data folder.
+            file_type (string): File extentions to look for with videos (default: mp4)
+            rescale (bool): Whether to downscale videos 50%
         """
         self.data_path = Path(data_path)
         # Recursively find all files of file_type in the data path
@@ -43,9 +45,7 @@ class Spo2Dataset(Dataset):
         for nb_video, video in enumerate(self.video_folders):
             print(f"Loading video {nb_video} from '{video}'")
             ppg = []
-            video_path = video.parent
-            video_file = str(video)
-            vidcap = cv2.VideoCapture(video_file)
+            vidcap = cv2.VideoCapture(str(video))
             meta = {}
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
             (grabbed, frame) = vidcap.read()
@@ -75,6 +75,14 @@ class Spo2Dataset(Dataset):
         height = int(frame.shape[0] * percent / 100)
         dim = (width, height)
         return cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+
+    #@timing
+    def crop_frame(self, frame, dims=()):
+        width = int(frame.shape[1] * percent / 100)
+        height = int(frame.shape[0] * percent / 100)
+        dim = (width, height)
+        return cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+
 
     #@timing
     def mean_t(self, frame):
@@ -158,4 +166,4 @@ if __name__ == "__main__":
         print('Padded video (length, color, (mean,std)): ',
               videos_batch[0].shape)
         print('Video original length: ', videos_lengths[0])
-        print('Labels (so2, hr): ', labels_batch[0])
+        print('Labels (SpO2, HR): ', labels_batch[0])
