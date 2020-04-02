@@ -28,7 +28,7 @@ class Spo2Dataset(Dataset):
         The process is slow so it may take a while to create the Dataset when first initated.
     """
 
-    def __init__(self, data_path, file_type='mp4', rescale=True):
+    def __init__(self, data_path, file_type='mp4', crop=True, rescale=True):
         """
         Args:
             data_path (string): Path to the data folder.
@@ -50,6 +50,8 @@ class Spo2Dataset(Dataset):
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
             (grabbed, frame) = vidcap.read()
             while grabbed:
+                if crop:
+                    frame = self.crop_frame(frame)
                 if rescale:
                     frame = self.rescale_frame(frame)
                 frame = self.transform_faster(frame)
@@ -77,11 +79,15 @@ class Spo2Dataset(Dataset):
         return cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
     #@timing
-    def crop_frame(self, frame, dims=()):
-        width = int(frame.shape[1] * percent / 100)
-        height = int(frame.shape[0] * percent / 100)
-        dim = (width, height)
-        return cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+    def crop_frame(self, frame, dims=(500, 500)):
+        in_dims = (frame.shape[0], frame.shape[1])
+        xlocs = (int(in_dims[0] / 2 - 0.5 * dims[0]),
+                 int(in_dims[0] / 2 + 0.5 * dims[0]))
+        ylocs = (int(in_dims[1] / 2 - 0.5 * dims[1]),
+                 int(in_dims[1] / 2 + 0.5 * dims[1]))
+        cropped_frame = frame[xlocs[0]:xlocs[1], ylocs[0]:ylocs[1]]
+
+        return cropped_frame
 
 
     #@timing
