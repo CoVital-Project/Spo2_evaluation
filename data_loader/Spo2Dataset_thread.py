@@ -41,7 +41,7 @@ class VideoGet:
 
 class Spo2Dataset(Dataset):
     """Spo2Dataset dataset.
-        It preprocess the data in order to create a Dataset with the average and std of each channel per frame. 
+        It preprocess the data in order to create a Dataset with the average and std of each channel per frame.
         The process is slow so it may take a while to create the Dataset when first initated.
     """
     def transform(self,frame):
@@ -57,7 +57,7 @@ class Spo2Dataset(Dataset):
         self.videos_ppg = []
         self.labels_list = []
         self.meta_list = []
-        
+
         for video in self.video_folders:
             ppg = []
             video_path = os.path.join(self.data_path, video)
@@ -77,7 +77,7 @@ class Spo2Dataset(Dataset):
 
             with open(os.path.join(video_path, 'gt.json'), 'r') as f:
                 ground_truth = json.load(f)
-            
+
             labels = torch.Tensor([int(ground_truth['SpO2']), int(ground_truth['HR'])])
             self.videos_ppg.append(torch.Tensor(np.array(ppg)))
             self.meta_list.append(meta)

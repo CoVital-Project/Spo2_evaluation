@@ -10,15 +10,16 @@ from queue import Queue
 import time
 from pathlib import Path
 
-#def timing(f):
-    #def wrap(*args):
-        #time1 = time.time()
-        #ret = f(*args)
-        #time2 = time.time()
-        #print('{:s} function took {:.3f} ms'.format(f.__name__, (time2-time1)*1000.0))
 
-        #return ret
-    #return wrap
+def timing(f):
+    def wrap(*args):
+        time1 = time.time()
+        ret = f(*args)
+        time2 = time.time()
+        print('{:s} function took {:.3f} ms'.format(
+            f.__name__, (time2-time1)*1000.0))
+        return ret
+    return wrap
 
 
 class Spo2Dataset(Dataset):
@@ -26,6 +27,7 @@ class Spo2Dataset(Dataset):
         It preprocess the data in order to create a Dataset with the average and std of each channel per frame.
         The process is slow so it may take a while to create the Dataset when first initated.
     """
+
     def __init__(self, data_path, file_type='mp4', rescale=True):
         """
         Args:
@@ -55,37 +57,38 @@ class Spo2Dataset(Dataset):
             with open(video.parent/'gt.json', 'r') as f:
                 ground_truth = json.load(f)
 
-            labels = torch.Tensor([int(ground_truth['SpO2']), int(ground_truth['HR'])])
+            labels = torch.Tensor(
+                [int(ground_truth['SpO2']), int(ground_truth['HR'])])
             self.videos_ppg.append(torch.Tensor(np.array(ppg)))
             self.meta_list.append(meta)
             self.labels_list.append(labels)
 
     #@timing
     def reshape(self, frame):
-        return frame.reshape(-1,3)
+        return frame.reshape(-1, 3)
 
     #@timing
-    def rescale_frame(self,frame, percent=50):
-        width = int(frame.shape[1] * percent/ 100)
-        height = int(frame.shape[0] * percent/ 100)
+    def rescale_frame(self, frame, percent=50):
+        width = int(frame.shape[1] * percent / 100)
+        height = int(frame.shape[0] * percent / 100)
         dim = (width, height)
-        return cv2.resize(frame, dim, interpolation =cv2.INTER_AREA)
+        return cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
 
     #@timing
     def mean_t(self, frame):
         return np.array([frame.mean(axis=0), frame.std(axis=0)]).T
 
     #@timing
-    def transform(self,frame):
+    def transform(self, frame):
         frame = self.reshape(frame)
         ret = self.mean_t(frame)
         return ret
 
     #@timing
-    def get_channels(self, frame, blue = 0, green = 1, red = 2):
-        blue_channel = frame[:,:,blue]
-        green_channel = frame[:,:,green]
-        red_channel = frame[:,:,red]
+    def get_channels(self, frame, blue=0, green=1, red=2):
+        blue_channel = frame[:, :, blue]
+        green_channel = frame[:, :, green]
+        red_channel = frame[:, :, red]
 
         return blue_channel, green_channel, red_channel
 
@@ -108,8 +111,10 @@ class Spo2Dataset(Dataset):
     #@timing
     def transform_faster(self, frame):
         blue_channel, green_channel, red_channel = self.get_channels(frame)
-        blue_channel_mean, green_channel_mean, red_channel_mean = self.mean_fast(blue_channel, green_channel, red_channel)
-        blue_channel_std, green_channel_std, red_channel_std = self.std_fast(blue_channel, green_channel, red_channel)
+        blue_channel_mean, green_channel_mean, red_channel_mean = self.mean_fast(
+            blue_channel, green_channel, red_channel)
+        blue_channel_std, green_channel_std, red_channel_std = self.std_fast(
+            blue_channel, green_channel, red_channel)
 
         return np.array([[blue_channel_mean, blue_channel_std],
                          [green_channel_mean, green_channel_std],
@@ -121,18 +126,21 @@ class Spo2Dataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-        return [self.videos_ppg[idx],self.meta_list[idx],self.labels_list[idx]]
+        return [self.videos_ppg[idx], self.meta_list[idx], self.labels_list[idx]]
+
 
 class Spo2DataLoader(DataLoader):
-    def collate_fn(batch):
+
+    def collate_fn(self, batch):
         videos_length = [element[0].shape[0] for element in batch]
         max_length = max(videos_length)
-        videos_tensor = torch.FloatTensor(size=[len(videos_length),max_length, 3, 2])
+        videos_tensor = torch.FloatTensor(
+            size=[len(videos_length), max_length, 3, 2])
         labels_tensor = torch.FloatTensor(size=[len(videos_length), 2])
         for i, element in enumerate(batch):
             padding = max_length-videos_length[i]
             if padding > 0:
-                padding = torch.zeros([padding,3,2])
+                padding = torch.zeros([padding, 3, 2])
                 video = torch.cat([element[0], padding])
             else:
                 video = element[0]
@@ -141,10 +149,13 @@ class Spo2DataLoader(DataLoader):
             labels_tensor[i] = element[2]
         return videos_tensor, labels_tensor, torch.Tensor(videos_length)
 
-if __name__== "__main__":
+
+if __name__ == "__main__":
     dataset = Spo2Dataset('sample_data')
-    dataloader = Spo2DataLoader(dataset, batch_size=4, collate_fn=Spo2DataLoader.collate_fn)
+    dataloader = Spo2DataLoader(
+        dataset, batch_size=4, collate_fn=Spo2DataLoader.collate_fn)
     for videos_batch, labels_batch, videos_lengths in dataloader:
-        print('Padded video (length, color, (mean,std)): ', videos_batch[0].shape)
+        print('Padded video (length, color, (mean,std)): ',
+              videos_batch[0].shape)
         print('Video original length: ', videos_lengths[0])
         print('Labels (so2, hr): ', labels_batch[0])
