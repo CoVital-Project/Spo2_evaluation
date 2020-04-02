@@ -129,32 +129,31 @@ class Spo2Dataset(Dataset):
         return [self.videos_ppg[idx], self.meta_list[idx], self.labels_list[idx]]
 
 
-class Spo2DataLoader(DataLoader):
-
-    def collate_fn(self, batch):
-        videos_length = [element[0].shape[0] for element in batch]
-        max_length = max(videos_length)
-        videos_tensor = torch.FloatTensor(
-            size=[len(videos_length), max_length, 3, 2])
-        labels_tensor = torch.FloatTensor(size=[len(videos_length), 2])
-        for i, element in enumerate(batch):
-            padding = max_length-videos_length[i]
-            if padding > 0:
-                padding = torch.zeros([padding, 3, 2])
-                video = torch.cat([element[0], padding])
-            else:
-                video = element[0]
-            labels = element[2]
-            videos_tensor[i] = video
-            labels_tensor[i] = element[2]
-        return videos_tensor, labels_tensor, torch.Tensor(videos_length)
+def spo2_collate_fn(batch):
+    videos_length = [element[0].shape[0] for element in batch]
+    max_length = max(videos_length)
+    videos_tensor = torch.FloatTensor(
+        size=[len(videos_length), max_length, 3, 2])
+    labels_tensor = torch.FloatTensor(size=[len(videos_length), 2])
+    for i, element in enumerate(batch):
+        padding = max_length-videos_length[i]
+        if padding > 0:
+            padding = torch.zeros([padding, 3, 2])
+            video = torch.cat([element[0], padding])
+        else:
+            video = element[0]
+        labels = element[2]
+        videos_tensor[i] = video
+        labels_tensor[i] = element[2]
+    return videos_tensor, labels_tensor, torch.Tensor(videos_length)
 
 
 if __name__ == "__main__":
     dataset = Spo2Dataset('sample_data')
-    dataloader = Spo2DataLoader(
-        dataset, batch_size=4, collate_fn=Spo2DataLoader.collate_fn)
-    for videos_batch, labels_batch, videos_lengths in dataloader:
+    dataloader = DataLoader(
+        dataset, batch_size=4, collate_fn=spo2_collate_fn)
+    for tup in dataloader:
+        print(tup)
         print('Padded video (length, color, (mean,std)): ',
               videos_batch[0].shape)
         print('Video original length: ', videos_lengths[0])
