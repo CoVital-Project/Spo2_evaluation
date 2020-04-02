@@ -28,7 +28,7 @@ class Spo2Dataset(Dataset):
         The process is slow so it may take a while to create the Dataset when first initated.
     """
 
-    def __init__(self, data_path, file_type='mp4', crop=True, rescale=True):
+    def __init__(self, data_path, file_type='mp4', crop=False, rescale=True):
         """
         Args:
             data_path (string): Path to the data folder.
@@ -50,12 +50,13 @@ class Spo2Dataset(Dataset):
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
             (grabbed, frame) = vidcap.read()
             while grabbed:
-                if crop:
-                    frame = self.crop_frame(frame)
                 if rescale:
                     frame = self.rescale_frame(frame)
+                if crop:
+                    frame = self.crop_frame(frame)
                 frame = self.transform_faster(frame)
                 ppg.append(frame)
+
                 (grabbed, frame) = vidcap.read()
 
             with open(video.parent/'gt.json', 'r') as f:
