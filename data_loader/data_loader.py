@@ -35,16 +35,18 @@ class Spo2Dataset(Dataset):
         """
         self.data_path = Path(data_path)
         # Recursively find all files of file_type in the data path
-        self.video_paths = self.data_path.glob(f'**/*.{file_type}')
+        self.video_folders = list(self.data_path.glob(f'**/*.{file_type}'))
         self.videos_ppg = []
         self.labels_list = []
         self.meta_list = []
 
-        for nb_video, video in enumerate(self.video_paths):
+        for nb_video, video in enumerate(self.video_folders):
             print(f"Loading video {nb_video} from '{video}'")
             ppg = []
+            video_path = video.parent
+            video_file = str(video)
+            vidcap = cv2.VideoCapture(video_file)
             meta = {}
-            vidcap = cv2.VideoCapture(str(video))
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
             (grabbed, frame) = vidcap.read()
             while grabbed:
@@ -121,7 +123,7 @@ class Spo2Dataset(Dataset):
                          [red_channel_mean, red_channel_std]])
 
     def __len__(self):
-        return len(list(self.video_paths))
+        return len(list(self.video_folders))
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -152,8 +154,7 @@ if __name__ == "__main__":
     dataset = Spo2Dataset('sample_data')
     dataloader = DataLoader(
         dataset, batch_size=4, collate_fn=spo2_collate_fn)
-    for tup in dataloader:
-        print(tup)
+    for videos_batch, labels_batch, videos_lengths in dataloader:
         print('Padded video (length, color, (mean,std)): ',
               videos_batch[0].shape)
         print('Video original length: ', videos_lengths[0])
