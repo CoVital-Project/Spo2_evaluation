@@ -10,7 +10,7 @@ This will itearate the folders at data_path and load their videos and compute th
 Once the dataset is ready, it can be fed to a DataLoader object.
 
 ```  
-dataloader = Spo2DataLoader(dataset, batch_size=4, collate_fn= Spo2DataLoader.collate_fn)
+dataloader = Spo2DataLoader(dataset, batch_size=4, collate_fn=collate_fn)
 ```  
 
 The output needs to be batched tensors, and therefore they have to share the same length. Since we have videos of different lengths, it pads the shorted ones to fit the length of the longest one in each frame. This may be an issue for models which require the same length for all batches, but it is convinient for RNN models. The real length of each video is accessible for each batch. Each batch returns three variables, videos_batch, labels_batch and videos_lengths.
