@@ -134,54 +134,6 @@ def vgg19bn(**kwargs):
     return model
 
 
-## Multilayer LSTM based classifier taking in 200 dimensional fixed time series inputs
-class LSTMClassifier(nn.Module):
-
-    def __init__(self, in_dim, hidden_dim, num_layers, dropout, bidirectional, num_classes, batch_size):
-        super(LSTMClassifier, self).__init__()
-        self.arch = 'lstm'
-        self.hidden_dim = hidden_dim
-        self.batch_size = batch_size
-        self.num_dir = 2 if bidirectional else 1
-        self.num_layers = num_layers
-
-        self.lstm = nn.LSTM(
-                input_size=in_dim,
-                hidden_size=hidden_dim,
-                num_layers=num_layers,
-                dropout=dropout,
-                bidirectional=bidirectional
-            )
-
-        self.hidden2label = nn.Sequential(
-            nn.Linear(hidden_dim*self.num_dir, hidden_dim),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(hidden_dim, num_classes),
-        )
-
-        # self.hidden = self.init_hidden()
-
-    def init_hidden(self):
-        if cuda:
-            h0 = Variable(torch.zeros(self.num_layers*self.num_dir, self.batch_size, self.hidden_dim).cuda())
-            c0 = Variable(torch.zeros(self.num_layers*self.num_dir, self.batch_size, self.hidden_dim).cuda())
-        else:
-            h0 = Variable(torch.zeros(self.num_layers*self.num_dir, self.batch_size, self.hidden_dim))
-            c0 = Variable(torch.zeros(self.num_layers*self.num_dir, self.batch_size, self.hidden_dim))
-        return (h0, c0)
-
-    def forward(self, x): # x is (batch_size, 1, 200), permute to (200, batch_size, 1)
-        x = x.permute(2, 0, 1)
-        # See: https://discuss.pytorch.org/t/solved-why-we-need-to-detach-variable-which-contains-hidden-representation/1426/2
-        lstm_out, (h, c) = self.lstm(x, self.init_hidden())
-        y  = self.hidden2label(lstm_out[-1])
-        return y
-
-
 ## 1D Variant of ResNet taking in 200 dimensional fixed time series inputs
 class BasicBlock(nn.Module):
     expansion = 1
