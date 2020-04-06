@@ -63,6 +63,9 @@ class Spo2Dataset(Dataset):
 
                 with open(video.parent/'gt.json', 'r') as f:
                     ground_truth = json.load(f)
+                    if ground_truth['SpO2'] == 'Unkown':
+                        ground_truth['SpO2'] = -1
+                        continue
 
                 labels = torch.Tensor(
                     [int(ground_truth['SpO2']), int(ground_truth['HR'])])
