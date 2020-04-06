@@ -43,31 +43,34 @@ class Spo2Dataset(Dataset):
         self.meta_list = []
 
         for nb_video, video in enumerate(self.video_folders):
-            print(f"Loading video {nb_video} from '{video}'")
-            ppg = []
-            vidcap = cv2.VideoCapture(str(video))
-            meta = {}
-            meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
-            meta['video_source'] = str(video)
-            (grabbed, frame) = vidcap.read()
-            while grabbed:
-                if rescale:
-                    frame = self.rescale_frame(frame)
-                if crop:
-                    frame = self.crop_frame(frame)
-                frame = self.transform_faster(frame)
-                ppg.append(frame)
-
+            try:
+                print(f"Loading video {nb_video} from '{video}'")
+                ppg = []
+                vidcap = cv2.VideoCapture(str(video))
+                meta = {}
+                meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
+                meta['video_source'] = str(video)
                 (grabbed, frame) = vidcap.read()
+                while grabbed:
+                    if rescale:
+                        frame = self.rescale_frame(frame)
+                    if crop:
+                        frame = self.crop_frame(frame)
+                    frame = self.transform_faster(frame)
+                    ppg.append(frame)
 
-            with open(video.parent/'gt.json', 'r') as f:
-                ground_truth = json.load(f)
+                    (grabbed, frame) = vidcap.read()
 
-            labels = torch.Tensor(
-                [int(ground_truth['SpO2']), int(ground_truth['HR'])])
-            self.videos_ppg.append(torch.Tensor(np.array(ppg)))
-            self.meta_list.append(meta)
-            self.labels_list.append(labels)
+                with open(video.parent/'gt.json', 'r') as f:
+                    ground_truth = json.load(f)
+
+                labels = torch.Tensor(
+                    [int(ground_truth['SpO2']), int(ground_truth['HR'])])
+                self.videos_ppg.append(torch.Tensor(np.array(ppg)))
+                self.meta_list.append(meta)
+                self.labels_list.append(labels)
+            except Exception as e:
+                print(video, e)
 
     #@timing
     def reshape(self, frame):
@@ -139,7 +142,7 @@ class Spo2Dataset(Dataset):
                          [red_channel_mean, red_channel_std]])
 
     def __len__(self):
-        return len(list(self.video_folders))
+        return len(self.videos_ppg)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
