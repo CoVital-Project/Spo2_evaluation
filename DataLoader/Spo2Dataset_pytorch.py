@@ -11,6 +11,8 @@ import time
 
 import pandas as pd
 
+
+
 #def timing(f):
     #def wrap(*args):
         #time1 = time.time()
@@ -154,8 +156,6 @@ class Spo2Dataset(Dataset):
             #self.labels_list.append(labels)
             
         self.data =  pd.DataFrame(data_list, column)
-        
-        
         print(self.data)
         
         
