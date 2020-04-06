@@ -1,14 +1,17 @@
+
+import sys
+sys.path.append("../data_loader")
+import data_loader_pandas
+
 #method of Scully et al.: "Physiological Parameter monitoring from optical recordings with a mobile phone"
 
 import torchvision
 from matplotlib import pyplot as plt
 
-import DataLoader
 
-
-def health_watcher(ppg_blue, ppg_blue_std, ppg_red, ppg_red_std, meta):
-    print(meta)
-    fps = meta['video_fps']
+def health_watcher(ppg_blue, ppg_blue_std, ppg_red, ppg_red_std, fps, smooth = True):
+    #print(meta)
+    #fps = meta['video_fps']
     
     A=100 # From "determination of spo2 and heart-rate using smartphone camera
     B=5
@@ -17,13 +20,17 @@ def health_watcher(ppg_blue, ppg_blue_std, ppg_red, ppg_red_std, meta):
     #TODO Add all mp4 from figshare
     #TODO Add all ground truth from figshare
 
-    spo2 = (A - B*(ppg_red_std / ppg_red )/(ppg_blue_std / ppg_blue)).numpy()
-    secs_to_smooth = 10
-    frames_to_smooth = int(10*fps)
-    spo2_smooth = [spo2[i:i+frames_to_smooth].mean() for i in range(len(spo2)-frames_to_smooth)]
+    spo2 = (A - B*(ppg_red_std / ppg_red )/(ppg_blue_std / ppg_blue))
+    
+    if smooth:
+        secs_to_smooth = 10
+        frames_to_smooth = int(10*fps)
+        spo2_smooth = [spo2[i:i+frames_to_smooth].mean() for i in range(len(spo2)-frames_to_smooth)]
+    else:
+        spo2_smooth = spo2
 
     x = [i for i in range(len(spo2_smooth))]
-
+    
     plt.figure()
     plt.plot(x, spo2_smooth)
     plt.show()
@@ -76,18 +83,24 @@ def health_watcher_old(video, meta):
 
 
 if __name__== "__main__":
-    dataset = DataLoader.Spo2Dataset('test_data')
-    dataloader = DataLoader.Spo2DataLoader(dataset, batch_size=4, collate_fn= DataLoader.Spo2DataLoader.collate_fn)
-    for videos_batch, labels_batch, videos_lengths in dataloader:
-        print('Padded video (length, color, (mean,std)): ', videos_batch[0].shape)
-        print('Video original length: ', videos_lengths[0])
-        print('Labels (so2, hr): ', labels_batch[0])
+    dataset = data_loader_pandas.Spo2DatasetPandas('test_data')
+    
+    for i in range(dataset.number_of_videos):
+        df = dataset.get_video(i)
         
-        # To numpy array of tensor
-        numpy_ppg = list()
-        for el in dataset.videos_ppg:
-            numpy_ppg.append(el.numpy())
+        df = df.T
         
+        blue = df['blue'].to_numpy()
+        red = df['red'].to_numpy()
+        green = df['green'].to_numpy()
+        blue_std = df['blue std'].to_numpy()
+        red_std = df['red std'].to_numpy()
+        green_std = df['green std'].to_numpy()
+        fps = df['fps'][0]
         
-        
-        print(health_watcher(dataset.))
+        spo2 = health_watcher(blue, blue_std, red, red_std, fps, smooth=False)
+        print(spo2)
+    
+    
+    
+    

@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
-from data_loader import Spo2Dataset, spo2_collate_fn
+from data_loader_pytorch import Spo2Dataset, spo2_collate_fn
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import mean_absolute_error
 import pandas as pd
