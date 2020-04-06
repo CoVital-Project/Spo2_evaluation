@@ -48,6 +48,7 @@ class Spo2Dataset(Dataset):
             vidcap = cv2.VideoCapture(str(video))
             meta = {}
             meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
+            meta['video_source'] = str(video)
             (grabbed, frame) = vidcap.read()
             while grabbed:
                 if rescale:
@@ -166,7 +167,21 @@ def spo2_collate_fn(batch):
 
 
 if __name__ == "__main__":
-    dataset = Spo2Dataset('sample_data')
+    DATADIR = Path('sample_data')
+    PERSIST = False
+
+    dataset = Spo2Dataset(DATADIR)
+
+    if PERSIST:
+        # Persist Spo2Dataset object to a pickle for quick reload
+        persist_dir = DATADIR/'pickled'
+        print(f"Persisting dataset to {persist_dir}")
+        if not os.path.exists(persist_dir):
+            os.makedirs(persist_dir)
+        import pickle
+        with open(persist_dir/'spo2dataset.pkl', 'wb') as pkl_file:
+            pickle.dump(dataset, pkl_file)
+
     dataloader = DataLoader(
         dataset, batch_size=4, collate_fn=spo2_collate_fn)
     for videos_batch, labels_batch, videos_lengths in dataloader:
