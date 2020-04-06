@@ -1,5 +1,7 @@
 from data_loader.data_loader import DataLoader, Spo2Dataset
 import pandas as pd
+from pathlib import Path
+import json
 
 
 def dataset_to_dataframe(dataset: Spo2Dataset):
@@ -50,5 +52,33 @@ def dataset_to_dataframe(dataset: Spo2Dataset):
     ordered_cols.remove('sample_id')
     ordered_cols.remove('sample_source')
     df = df[[*ordered_cols, 'sample_id', 'sample_source']]
+
+    return df
+
+
+def ground_truth_dataframe(data_path='sample_data/'):
+    """Retrieves SpO2 and HR values from all `gt.json` files in a path as a DataFrame.
+
+    Parameters
+    ----------
+    data_path : str, optional
+        The path to the data you want to extract values for`, by default 'sample_data/'
+
+    Returns
+    -------
+    pd.DataFrame
+        A dataframe mapping paths to HR and SpO2 values.
+    """
+
+    path = Path(data_path)
+    gt_dict = {'path': [], 'HR': [], 'SpO2': []}
+    for file in path.glob('**/gt.json'):
+        with open(file, 'r') as json_file:
+            json_vals = json.load(json_file)
+            gt_dict['path'].append(str(file.parent))
+            for key in ['HR', 'SpO2']:
+                gt_dict[key].append(json_vals[key])
+
+    df = pd.DataFrame.from_dict(gt_dict)
 
     return df
