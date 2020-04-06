@@ -1,4 +1,5 @@
 import pytest
 
 # TODO write some actual tests
-assert(True)
+def test_dummy():
+    assert(True)
