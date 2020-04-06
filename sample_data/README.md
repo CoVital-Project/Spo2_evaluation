@@ -1,5 +1,7 @@
 # CoVital sample data
 
+(If github LFS gives you problems. You can directly download the data [here](https://www.dropbox.com/s/dl8o9htbfsmzl50/sample_data.zip?dl=1))
+
 This directory contains sample data compiled as a preliminary dataset. It was gathered under lockdown conditions on asymptomatic individuals. It should not be considered a comprehensive sample. Rather, it is intended to indicate the structure of future data and provide sanity checks for early model implementations.
 
 ## Overview
