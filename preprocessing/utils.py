@@ -45,13 +45,13 @@ def dataset_to_dataframe(dataset: Spo2Dataset):
     df = pd.concat(dfs)
 
     df.rename({'index': 'sample_id'}, axis=1, inplace=True)
-    df['sample_source'] = df['sample_id'].apply(
-        lambda x: meta_dict[x]['video_source'])
 
     ordered_cols = list(df.columns)
     ordered_cols.remove('sample_id')
-    ordered_cols.remove('sample_source')
-    df = df[[*ordered_cols, 'sample_id', 'sample_source']]
+    df = df[[*ordered_cols, 'sample_id']]
+
+    df['sample_source'] = df['sample_id'].apply(
+        lambda x: meta_dict[x]['video_source'])
 
     return df
 
