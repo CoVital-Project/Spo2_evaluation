@@ -80,7 +80,7 @@ class Spo2Dataset(Dataset):
         return frame.reshape(-1, 3)
 
     #@timing
-    def rescale_frame(self, frame, percent=50):
+    def rescale_frame(self, frame, percent=10):
         width = int(frame.shape[1] * percent / 100)
         height = int(frame.shape[0] * percent / 100)
         dim = (width, height)
