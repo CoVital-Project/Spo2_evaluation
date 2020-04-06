@@ -5,14 +5,14 @@ import nemcova_2020
 
 def main():
     cv2.getBuildInformation()
-    #lamonaca = lamonaca_2015.Lamonaca2015()
-    
-    #lamonaca.lacomana("Video/S98T89.avi")
-    
+    # lamonaca = lamonaca_2015.Lamonaca2015()
+
+    # lamonaca.lacomana("Video/S98T89.avi")
+
     nemcova = nemcova_2020.Nemcova2020()
-    o2, hr = nemcova.spo2_estimation("Video/S87T78.mp4", optimize = True)
-    print("Done:" , o2, " and hr ", hr)
+    o2, hr = nemcova.spo2_estimation("Video/S87T78.mp4", optimize=True)
+    print("Done:", o2, " and hr ", hr)
 
-if __name__== "__main__":
-  main()
 
+if __name__ == "__main__":
+    main()

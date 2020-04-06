@@ -23,7 +23,9 @@ if __name__ == "__main__":
 
     # Hacky trick to split the DataFrame into several dictionaries (for later JSON files)
     json_dict = {}
-    json_dict["gt.json"] = df[["SpO2", "HR", "VideoFilename", "Notes"]].to_dict(orient="index")
+    json_dict["gt.json"] = df[["SpO2", "HR", "VideoFilename", "Notes"]].to_dict(
+        orient="index"
+    )
     json_dict["phone.json"] = df[["PhoneMake", "PhoneModel"]].to_dict(orient="index")
     json_dict["device.json"] = df[["DeviceMake", "DeviceModel"]].to_dict(orient="index")
     json_dict["user.json"] = df[["PatientID"]].to_dict(orient="index")
@@ -41,7 +43,7 @@ if __name__ == "__main__":
         for key, vals in json_dict.items():
             with open(path / key, "w") as file:
                 json.dump(vals[i], file)
-                
+
         vid_filename = json_dict["gt.json"][i]["VideoFilename"]
         vidpath = VIDSPATH / vid_filename
         print(f"Collecting video: {vidpath}")
