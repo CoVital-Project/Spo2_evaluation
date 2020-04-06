@@ -20,3 +20,19 @@ def get_models():
     ]
 '''
 It will save the best model so far in the folder specified at 'experiment_path'.
+
+Suggested TODO:
+
+- Add Bland Altman analysis to the metrics (Currently only MAE, Mean Average Error)
+
+- Switch to Tensorboard reporting instead of printing.
+
+- Normalize input to the network.
+
+- Avoid saving the model each time there is an improvement, rewrite over previous one, or add option to save or not.
+
+- General clean up of the code, probably many ways to be improved.
+
+- Train on HR.
+
+- Use sample_data as validation set.
