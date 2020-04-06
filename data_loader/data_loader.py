@@ -61,7 +61,9 @@ class Spo2Dataset(Dataset):
 
             with open(video.parent/'gt.json', 'r') as f:
                 ground_truth = json.load(f)
-
+                if ground_truth['SpO2'] == 'Unkown':
+                    ground_truth['SpO2'] = -1
+                    continue
             labels = torch.Tensor(
                 [int(ground_truth['SpO2']), int(ground_truth['HR'])])
             self.videos_ppg.append(torch.Tensor(np.array(ppg)))
@@ -73,7 +75,7 @@ class Spo2Dataset(Dataset):
         return frame.reshape(-1, 3)
 
     #@timing
-    def rescale_frame(self, frame, percent=50):
+    def rescale_frame(self, frame, percent=10):
         width = int(frame.shape[1] * percent / 100)
         height = int(frame.shape[0] * percent / 100)
         dim = (width, height)
@@ -138,7 +140,7 @@ class Spo2Dataset(Dataset):
                          [red_channel_mean, red_channel_std]])
 
     def __len__(self):
-        return len(list(self.video_folders))
+        return len(list(self.videos_ppg))
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
