@@ -1,3 +1,5 @@
 *.pyc
 *.kate-swp
 *.kdev4
+sample_data/*
+nemcomva_data/*

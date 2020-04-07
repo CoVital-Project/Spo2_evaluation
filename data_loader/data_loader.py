@@ -79,3 +79,56 @@ class Spo2Dataset(abc.ABC):
             blue_channel, green_channel, red_channel)
 
         return blue_channel_mean, blue_channel_std, green_channel_mean, green_channel_std, red_channel_mean, red_channel_std
+
+    def __len__(self):
+        return len(self.videos_ppg)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        return [self.videos_ppg[idx], self.meta_list[idx], self.labels_list[idx]]
+
+
+def spo2_collate_fn(batch):
+    videos_length = [element[0].shape[0] for element in batch]
+    max_length = max(videos_length)
+    videos_tensor = torch.FloatTensor(
+        size=[len(videos_length), max_length, 3, 2])
+    labels_tensor = torch.FloatTensor(size=[len(videos_length), 2])
+    for i, element in enumerate(batch):
+        padding = max_length-videos_length[i]
+        if padding > 0:
+            padding = torch.zeros([padding, 3, 2])
+            video = torch.cat([element[0], padding])
+        else:
+            video = element[0]
+        labels = element[2]
+        videos_tensor[i] = video
+        labels_tensor[i] = element[2]
+    return videos_tensor, labels_tensor, torch.Tensor(videos_length)
+
+
+if __name__ == "__main__":
+    DATADIR = Path('sample_data')
+    PERSIST = False
+
+    dataset = Spo2Dataset(DATADIR)
+
+    if PERSIST:
+        # Persist Spo2Dataset object to a pickle for quick reload
+        persist_dir = DATADIR/'pickled'
+        print(f"Persisting dataset to {persist_dir}")
+        if not os.path.exists(persist_dir):
+            os.makedirs(persist_dir)
+        import pickle
+        with open(persist_dir/'spo2dataset.pkl', 'wb') as pkl_file:
+            pickle.dump(dataset, pkl_file)
+
+    dataloader = DataLoader(
+        dataset, batch_size=4, collate_fn=spo2_collate_fn)
+    for videos_batch, labels_batch, videos_lengths in dataloader:
+        print('Padded video (length, color, (mean,std)): ',
+              videos_batch[0].shape)
+        print('Video original length: ', videos_lengths[0])
+        print('Labels (SpO2, HR): ', labels_batch[0])
+>>>>>>> master
