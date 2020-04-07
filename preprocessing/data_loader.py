@@ -4,6 +4,7 @@ import json
 import torch
 import time
 from pathlib import Path
+import cv2
 
 import abc
 
