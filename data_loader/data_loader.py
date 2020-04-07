@@ -43,32 +43,37 @@ class Spo2Dataset(Dataset):
         self.meta_list = []
 
         for nb_video, video in enumerate(self.video_folders):
-            print(f"Loading video {nb_video} from '{video}'")
-            ppg = []
-            vidcap = cv2.VideoCapture(str(video))
-            meta = {}
-            meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
-            (grabbed, frame) = vidcap.read()
-            while grabbed:
-                if rescale:
-                    frame = self.rescale_frame(frame)
-                if crop:
-                    frame = self.crop_frame(frame)
-                frame = self.transform_faster(frame)
-                ppg.append(frame)
-
+            try:
+                print(f"Loading video {nb_video} from '{video}'")
+                ppg = []
+                vidcap = cv2.VideoCapture(str(video))
+                meta = {}
+                meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
+                meta['video_source'] = str(video)
                 (grabbed, frame) = vidcap.read()
+                while grabbed:
+                    if rescale:
+                        frame = self.rescale_frame(frame)
+                    if crop:
+                        frame = self.crop_frame(frame)
+                    frame = self.transform_faster(frame)
+                    ppg.append(frame)
 
-            with open(video.parent/'gt.json', 'r') as f:
-                ground_truth = json.load(f)
-                if ground_truth['SpO2'] == 'Unkown':
-                    ground_truth['SpO2'] = -1
-                    continue
-            labels = torch.Tensor(
-                [int(ground_truth['SpO2']), int(ground_truth['HR'])])
-            self.videos_ppg.append(torch.Tensor(np.array(ppg)))
-            self.meta_list.append(meta)
-            self.labels_list.append(labels)
+                    (grabbed, frame) = vidcap.read()
+
+                with open(video.parent/'gt.json', 'r') as f:
+                    ground_truth = json.load(f)
+                    if ground_truth['SpO2'] == 'Unkown':
+                        ground_truth['SpO2'] = -1
+                        continue
+
+                labels = torch.Tensor(
+                    [int(ground_truth['SpO2']), int(ground_truth['HR'])])
+                self.videos_ppg.append(torch.Tensor(np.array(ppg)))
+                self.meta_list.append(meta)
+                self.labels_list.append(labels)
+            except Exception as e:
+                print(video, e)
 
     #@timing
     def reshape(self, frame):
@@ -140,7 +145,7 @@ class Spo2Dataset(Dataset):
                          [red_channel_mean, red_channel_std]])
 
     def __len__(self):
-        return len(list(self.videos_ppg))
+        return len(self.videos_ppg)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -168,7 +173,21 @@ def spo2_collate_fn(batch):
 
 
 if __name__ == "__main__":
-    dataset = Spo2Dataset('sample_data')
+    DATADIR = Path('sample_data')
+    PERSIST = False
+
+    dataset = Spo2Dataset(DATADIR)
+
+    if PERSIST:
+        # Persist Spo2Dataset object to a pickle for quick reload
+        persist_dir = DATADIR/'pickled'
+        print(f"Persisting dataset to {persist_dir}")
+        if not os.path.exists(persist_dir):
+            os.makedirs(persist_dir)
+        import pickle
+        with open(persist_dir/'spo2dataset.pkl', 'wb') as pkl_file:
+            pickle.dump(dataset, pkl_file)
+
     dataloader = DataLoader(
         dataset, batch_size=4, collate_fn=spo2_collate_fn)
     for videos_batch, labels_batch, videos_lengths in dataloader:
