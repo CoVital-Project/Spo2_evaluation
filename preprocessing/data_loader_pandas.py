@@ -8,10 +8,11 @@ import torch
 from threading import Thread
 from queue import Queue
 import time
-
 import pandas as pd
-
 import data_loader
+import utils
+
+import matplotlib.pyplot as plt
 
 #def timing(f):
     #def wrap(*args):
@@ -96,9 +97,9 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
                 
                 ppg.append(frame)
                 (grabbed, frame) = vidcap.read()
-                if(frame_count % 50 == 0 and frame_count != 0):
+                if(frame_count % 100 == 0 and frame_count != 0):
                     print("Frame:", frame_count)
-                    break
+                    #break
                 frame_count += 1
             with open(os.path.join(video_path, 'gt.json'), 'r') as f:
                 ground_truth = json.load(f)
@@ -118,8 +119,8 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
             
             data_sample_label_id = data_sample_label_id + [nb_video]
             data_label_source = data_label_source + [video_path]
-            data_hr = data_hr + [int(ground_truth['HR'])]
-            data_spo2 = data_spo2 + [int(ground_truth['SpO2'])]
+            data_hr = data_hr + [int(ground_truth['hrgt'])]
+            data_spo2 = data_spo2 + [int(ground_truth['o2gt'])]
             #data_list.append([int(ground_truth['SpO2'])])
             #data_list.append([int(ground_truth['HR'])])
             #data_list.append([meta['video_fps']])
@@ -143,11 +144,64 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
         #self.data = self.data.T
         print(self.ground_truths_sample)
         
+        
+    
+        
+    def print_pgg(self, video_id):
+        
+        plt.figure()
+        
+        #print("GO")
+        #print(self.sample_data)
+        
+        video = self.sample_data.loc[self.sample_data['sample_id'] == video_id]
+        
+        print("video")
+        print(video)
+        
+        red = video["mean_red"].to_numpy()
+        red_n = utils.normalize_ppg(red)
+        green = video["mean_green"].to_numpy()
+        green_n = utils.normalize_ppg(green)
+        blue = video["mean_blue"].to_numpy()
+        blue_n = utils.normalize_ppg(blue)
+        
+        plt.plot(video["frame"].to_numpy(), red_n, "r", label="max: " + str(np.amax(red)))
+        plt.plot(video["frame"].to_numpy(), green_n, "g", label="max: " + str(np.amax(green)))
+        plt.plot(video["frame"].to_numpy(), blue_n, "b", label="max: " + str(np.amax(blue)))
+        #plt.plot(video["frame"].to_array(), video["mean_green"].to_array())
+        #plt.plot(video["frame"].to_array(), video["mean_blue"].to_array())
+        # plt.plot(timestamps, vps_red[1:], 'b')
+
+        plt.legend()
+        plt.xlabel("t")
+        plt.grid(True)
+
+
+        print(video["sample_source"].iloc[0])
+        plt.title(video["sample_source"].iloc[0])
+
+        #plt.figure(1)
+        #plt.plot(timestamps, ppg_green_normalized[1:])
+        #plt.plot(timestamps, ppg_green_filtered_normalized, "g")
+        ## plt.plot(timestamps, vps_green[1:], 'b')
+
+        #plt.xlabel("t")
+        #plt.grid(True)
+        #plt.title("PPG signal for the color green")
+
+        
     #def get_video(self, index):
         #index_frame = 9 * index
         #return self.data.iloc[index_frame:index_frame+9]
 
 
 if __name__== "__main__":
-    dataset = Spo2DatasetPandas('test_data')
+    dataset = Spo2DatasetPandas('test_iphone')
+    dataset.print_pgg(0)
+    dataset.print_pgg(1)
+    dataset.print_pgg(2)
+    
+    plt.show()
+        
     

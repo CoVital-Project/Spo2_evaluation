@@ -4,6 +4,18 @@ from pathlib import Path
 import json
 
 
+def normalize_ppg(ppg):
+    ppg_max = np.amax(ppg)
+    ppg_min = np.amin(ppg)
+    
+    if (ppg_max - ppg_min) == 0:
+        return ppg
+    
+    ppg = (ppg - ppg_min) / (ppg_max - ppg_min)
+    
+    return ppg
+
+
 def dataset_to_dataframe(dataset: Spo2Dataset):
     """Transforms a Spo2Dataset object into a single pandas DataFrame.
 
