@@ -142,3 +142,26 @@ def select_features(df: pd.DataFrame, n_features=20, target='SpO2') -> pd.DataFr
     _df = df[[*best_cols, target]]
 
     return _df
+
+
+def augment_dataset(df: pd.DataFrame, n_frames=200, overlap=False) -> pd.DataFrame:
+
+    def gen_sample_id(sid, frame):
+        return f"{sid}_{frame // n_frames}"
+
+    def gen_frame(frame):
+        return frame % n_frames
+
+    _df = df.copy()
+
+    if overlap:
+        raise NotImplementedError("Overalapping not yet supported")
+
+    _df['original_sample_id'] = _df['sample_id']
+
+    _df['sample_id'] = _df.apply(lambda x: gen_sample_id(
+        x['original_sample_id'], x['frame']), axis=1)
+
+    _df['frame'] = _df['frame'].apply(gen_frame)
+
+    return _df
