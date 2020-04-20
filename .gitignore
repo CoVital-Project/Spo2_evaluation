@@ -6,6 +6,9 @@ Pipfile.lock
 # macOS dotfiles
 **/.DS_Store
 
+# VScode stuff
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
