@@ -184,8 +184,8 @@ def spo2_collate_fn(batch):
 
 
 if __name__ == "__main__":
-    DATADIR = Path("sample_data")
-    PERSIST = False
+    DATADIR = Path("data/nemcova_data")
+    PERSIST = True
 
     dataset = Spo2Dataset(DATADIR)
 
