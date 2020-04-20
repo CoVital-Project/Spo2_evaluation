@@ -7,8 +7,7 @@ preprocessed_data/
 ├── README.md
 ├── nemcova_data
 │   ├── ground_truths_nemcova.csv
-│   ├── nemcova_test.csv
-│   └── nemcova_train.csv
+│   └── nemcova_data.csv
 └── sample_data
     ├── ground_truths_sample.csv
     └── sample_data.csv
