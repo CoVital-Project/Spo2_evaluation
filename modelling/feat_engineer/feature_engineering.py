@@ -4,13 +4,13 @@ from scipy.signal import butter, filtfilt, welch, firwin
 from sklearn.preprocessing import normalize
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot as plt
-from tsfresh import extract_features
+from tsfresh import extract_features, select_features
 from tsfresh.utilities.dataframe_functions import impute
 from pathlib import Path
 from sklearn.feature_selection import SelectKBest, f_classif
 
 
-def rgb_to_ppg(df: pd.DataFrame, filter='band') -> pd.DataFrame:
+def rgb_to_ppg(df: pd.DataFrame, filter='band', block_id='sample_id') -> pd.DataFrame:
     """Turn RGB means into PPG curves as per Lamonaca.
 
     Parameters
@@ -22,6 +22,9 @@ def rgb_to_ppg(df: pd.DataFrame, filter='band') -> pd.DataFrame:
         `band` = bandpass Butterworth filter
         `low` = lowpass Butterworth filter
         `firwin` = lowpass Firwin filter
+    block_id : str, optional
+        The field to use for chunking the data before applying transforms,
+        by default 'sample_id'.
 
     Returns
     -------
@@ -57,18 +60,20 @@ def rgb_to_ppg(df: pd.DataFrame, filter='band') -> pd.DataFrame:
             b = firwin(order+1, cutoff, )
             a = 1.0
 
-    # Apply the filter
-    for field in tx_fields:
-        _df[field] = filtfilt(b, a, _df[field])
+    # Apply the filter (and normalise)
+    for bid in _df[block_id].unique():
+        for field in tx_fields:
+            _df.loc[_df[block_id] == bid, field] = filtfilt(
+                b, a, _df[_df[block_id] == bid][field])
 
-    '''Normalization /  Standardization'''
-    # _df[tx_fields] = normalize(_df[tx_fields], axis=1)
-    _df[tx_fields] = StandardScaler().fit_transform(_df[tx_fields])
+            # Normalization /  Standardization
+            _df.loc[_df[block_id] == bid, field] = StandardScaler(
+            ).fit_transform(_df[_df[block_id] == bid][field].values.reshape(-1, 1))
 
     return _df
 
 
-def create_path_field(df: pd.DataFrame) -> pd.DataFrame:
+def _create_path_field(df: pd.DataFrame) -> pd.DataFrame:
     """Create `path` field from `sample_source`, then remove `sample_source`.
 
     Parameters
@@ -88,32 +93,85 @@ def create_path_field(df: pd.DataFrame) -> pd.DataFrame:
     return _df
 
 
-def engineer_features(df: pd.DataFrame, labels: pd.DataFrame, target='SpO2'):
+def _attach_sample_id_to_ground_truth(df: pd.DataFrame, labels: pd.DataFrame) -> pd.DataFrame:
+    """Returns a copy of `labels` with added `sample_id` field.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        [description]
+    labels : pd.DataFrame
+        [description]
+
+    Returns
+    -------
+    pd.DataFrame
+        [description]
+    """
+    _df = df[['sample_id', 'sample_source']]
+    _labels = labels.copy()
+
+    _df = _create_path_field(_df)
+    _df = _df.drop_duplicates(subset=['sample_id', 'path'], keep='first')
+
+    out = _df.merge(_labels, on='path', how='inner')
+
+    return out
+
+
+def engineer_features(df: pd.DataFrame, labels: pd.DataFrame, target='SpO2', select=True):
+    """Automatic feature engineering (with optional selection) for timeseries dataframe.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe of rgb and/or ppg timeseries for all subjects.
+    labels : pd.DataFrame
+        A dataframe matching sample IDs to ground truth (e.g. SpO2)
+    target : str, optional
+        The name of the column you're trying to predict, by default 'SpO2'
+    select : bool, optional
+        Whether to automatically filter down to statistically significant features, by default True
+
+    Returns
+    -------
+    pd.DataFrame
+        A dataframe with new features added, including the target feature.
+    """
 
     _df = df.copy()
-    _df = create_path_field(_df)
-    ids = _df['path'].unique()
+    _labels = labels.copy()
 
-    _labels = labels[labels['path'].isin(ids)]
-    y = _labels.set_index('path')[target].astype(np.float)
+    if 'sample_id' not in labels.columns:
+        _labels = _attach_sample_id_to_ground_truth(_df, _labels)
+
+    ids = _df['sample_id'].unique()
+
+    _labels = _labels[_labels['sample_id'].isin(ids)]
+    y = _labels.set_index('sample_id')[target].astype(np.float)
+
+    _df.drop('sample_source', axis=1, inplace=True)
 
     extracted_features = extract_features(
         _df,
-        # y,
-        column_id="path",
+        column_id="sample_id",
         column_sort="frame",
     )
 
     impute(extracted_features)
-    # features_filtered = select_features(
-    #     extracted_features, y, ml_task='regression',)
+    features = extracted_features
+    if select:
+        features_filtered = select_features(
+            extracted_features, y, ml_task='regression',)
+        print(extracted_features.shape, features_filtered.shape)
+        features = features_filtered
 
-    out_df = extracted_features.join(y, how='left')
+    out_df = features.join(y, how='left')
 
     return out_df
 
 
-def select_features(df: pd.DataFrame, n_features=20, target='SpO2') -> pd.DataFrame:
+def select_best_features(df: pd.DataFrame, n_features=20, target='SpO2') -> pd.DataFrame:
     """Perform feature selection using k-best strategy and return dataframe.
 
     Parameters
@@ -145,6 +203,26 @@ def select_features(df: pd.DataFrame, n_features=20, target='SpO2') -> pd.DataFr
 
 
 def augment_dataset(df: pd.DataFrame, n_frames=200, overlap=False) -> pd.DataFrame:
+    """Simple data augmentation by chopping timeseries into blocks.
+
+    This doesn't modify the data. It just overwrites the `sample_id`
+    field with new values. i.e. a single sample of `N` frames is now
+    seen as `M` different samples of `N/M` frames.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Your timeries data for all samples.
+    n_frames : int, optional
+        The lenth (in frames) of each new chunk/sample, by default 200
+    overlap : bool, optional
+        Whether blocks should overlap (not yet implemented), by default False
+
+    Returns
+    -------
+    pd.DataFrame
+        The augmented timeseries data.show()
+    """
 
     def gen_sample_id(sid, frame):
         return f"{sid}_{frame // n_frames}"
@@ -157,11 +235,22 @@ def augment_dataset(df: pd.DataFrame, n_frames=200, overlap=False) -> pd.DataFra
     if overlap:
         raise NotImplementedError("Overalapping not yet supported")
 
+    # Make a copy of the sample_id for later reference
     _df['original_sample_id'] = _df['sample_id']
 
+    # Apply the gen_sample_id function to create an augmented sample_id
     _df['sample_id'] = _df.apply(lambda x: gen_sample_id(
         x['original_sample_id'], x['frame']), axis=1)
 
+    # Apply the gen_frame function to augment the frame values
     _df['frame'] = _df['frame'].apply(gen_frame)
+
+    # Trim the excess (samples which have fewer than `n_frames` frames)
+    drop_sids = []
+    for sid in _df['sample_id'].unique():
+        frame_count = _df[_df['sample_id'] == sid]['frame'].tail(1).values
+        if (frame_count + 1) < n_frames:
+            drop_sids.append(sid)
+    _df = _df[~_df['sample_id'].isin(drop_sids)]
 
     return _df
