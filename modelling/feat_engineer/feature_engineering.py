@@ -2,13 +2,43 @@ import numpy as np
 import pandas as pd
 from scipy.signal import butter, filtfilt, welch, firwin
 from sklearn.preprocessing import normalize
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 from matplotlib import pyplot as plt
 from tsfresh import extract_features, select_features
 from tsfresh.utilities.dataframe_functions import impute
 from pathlib import Path
 from sklearn.feature_selection import SelectKBest, f_classif
 import pywt
+from ..lamonaca_and_nemcova.utils import spo2_estimation, get_peak_height_slope
+
+
+def calc_spo2(df: pd.DataFrame):
+
+    """Not working"""
+    raise NotImplementedError()
+
+    e_hb_600 = 15.0
+    e_hb_940 = 0.8
+    e_hbo_600 = 3.5
+    e_hbo_940 = 1.1
+
+    timestamps = np.linspace(0, int(float(df.shape[0])/30.0), num=df.shape[0])
+
+    vp_940, m_940, hr_940 = get_peak_height_slope(df['tx_green'].values, timestamps, 30.0)
+    vp_600, m_600, hr_600 = get_peak_height_slope(df['tx_red'].values, timestamps, 30.0)
+
+    ln_vp_600 = np.log(vp_600)
+    ln_vp_940 = np.log(vp_940)
+
+    print(ln_vp_600, ln_vp_940)
+    print(m_600, m_940)
+    print(hr_600, hr_940)
+
+    spo2 = (e_hb_600 * np.sqrt(m_940 * ln_vp_940) - e_hb_940 * np.sqrt(m_600 * ln_vp_600)) / \
+        (np.sqrt(m_940 * ln_vp_940)*(e_hb_600 - e_hbo_600) -
+         np.sqrt(m_600 * ln_vp_600)*(e_hb_940 - e_hbo_940))
+
+    return spo2.mean(), spo2.std()
 
 
 def _wavelet_filter_signal(s, wave='db4', *args, **kwargs):
@@ -18,7 +48,7 @@ def _wavelet_filter_signal(s, wave='db4', *args, **kwargs):
     return s_mod
 
 
-def rgb_to_ppg(df: pd.DataFrame, filter='band', qe_constants=(0.004989, 0.001193, 0.001), block_id='sample_id') -> pd.DataFrame:
+def rgb_to_ppg(df: pd.DataFrame, filter='band', qe_constants=(0.004989, 0.001193, 0.001), scale=False, block_id='sample_id') -> pd.DataFrame:
     """Turn RGB means into PPG curves as per Lamonaca.
 
     Parameters
@@ -44,8 +74,8 @@ def rgb_to_ppg(df: pd.DataFrame, filter='band', qe_constants=(0.004989, 0.001193
 
     """
 
-    if filter not in ['band', 'low', 'firwin']:
-        raise ValueError("filter must be 'band', 'low', or 'firwin'")
+    if filter not in ['band', 'low', 'firwin', None]:
+        raise ValueError("filter must be 'band', 'low', 'firwin', or None")
 
     _df = df.copy()
 
@@ -60,27 +90,29 @@ def rgb_to_ppg(df: pd.DataFrame, filter='band', qe_constants=(0.004989, 0.001193
     nyq = 0.5 * fs  # Nyquist Frequency
     order = 2
 
-    if filter == 'band':
-        low = 0.3 / nyq
-        high = 4.2 / nyq
-        b, a = butter(order, [low, high], btype='band', analog=False)
-    else:
-        cutoff = 4.0 / nyq    # desired cutoff frequency of the filter, Hz
-        if filter == 'low':
-            b, a = butter(order, cutoff, btype='low', analog=False)
-        if filter == 'firwin':
-            b = firwin(order+1, cutoff, )
-            a = 1.0
+    if filter is not None:
+        if filter == 'band':
+            low = 0.3 / nyq
+            high = 4.2 / nyq
+            b, a = butter(order, [low, high], btype='band', analog=False)
+        else:
+            cutoff = 4.0 / nyq    # desired cutoff frequency of the filter, Hz
+            if filter == 'low':
+                b, a = butter(order, cutoff, btype='low', analog=False)
+            if filter == 'firwin':
+                b = firwin(order+1, cutoff, )
+                a = 1.0
 
-    # Apply the filter (and normalise)
-    for bid in _df[block_id].unique():
-        for field in tx_fields:
-            _df.loc[_df[block_id] == bid, field] = filtfilt(
-                b, a, _df[_df[block_id] == bid][field])
+        # Apply the filter (and normalise)
+        for bid in _df[block_id].unique():
+            for field in tx_fields:
+                _df.loc[_df[block_id] == bid, field] = filtfilt(
+                    b, a, _df[_df[block_id] == bid][field])
 
-            # Normalization /  Standardization
-            _df.loc[_df[block_id] == bid, field] = StandardScaler(
-            ).fit_transform(_df[_df[block_id] == bid][field].values.reshape(-1, 1))
+                # Scaling
+                if scale:
+                    _df.loc[_df[block_id] == bid, field] = MinMaxScaler(
+                    ).fit_transform(_df[_df[block_id] == bid][field].values.reshape(-1, 1))
 
     return _df
 
