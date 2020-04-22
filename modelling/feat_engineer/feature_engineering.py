@@ -18,7 +18,7 @@ def _wavelet_filter_signal(s, wave='db4', *args, **kwargs):
     return s_mod
 
 
-def rgb_to_ppg(df: pd.DataFrame, filter='band', block_id='sample_id') -> pd.DataFrame:
+def rgb_to_ppg(df: pd.DataFrame, filter='band', qe_constants=(0.004989, 0.001193, 0.001), block_id='sample_id') -> pd.DataFrame:
     """Turn RGB means into PPG curves as per Lamonaca.
 
     Parameters
@@ -30,6 +30,9 @@ def rgb_to_ppg(df: pd.DataFrame, filter='band', block_id='sample_id') -> pd.Data
         `band` = bandpass Butterworth filter
         `low` = lowpass Butterworth filter
         `firwin` = lowpass Firwin filter
+    qe_constants : (float, float, float)
+        The Quantum Efficiency constants (Lamonaca et al.) to use for scaling the
+        means of the (red, green, blue) channels respectively.
     block_id : str, optional
         The field to use for chunking the data before applying transforms,
         by default 'sample_id'.
@@ -46,8 +49,9 @@ def rgb_to_ppg(df: pd.DataFrame, filter='band', block_id='sample_id') -> pd.Data
 
     _df = df.copy()
 
-    for colour in ['red', 'green', 'blue']:
-        _df[f'tx_{colour}'] = _df[f'mean_{colour}']
+    for i, colour in enumerate(['red', 'green', 'blue']):
+        qe_const = qe_constants[i]
+        _df[f'tx_{colour}'] = _df[f'mean_{colour}'] * qe_const
 
     tx_fields = ['tx_red', 'tx_green', 'tx_blue']
 
