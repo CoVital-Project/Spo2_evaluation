@@ -8,6 +8,14 @@ from tsfresh import extract_features, select_features
 from tsfresh.utilities.dataframe_functions import impute
 from pathlib import Path
 from sklearn.feature_selection import SelectKBest, f_classif
+import pywt
+
+
+def _wavelet_filter_signal(s, wave='db4', *args, **kwargs):
+    cA, cD = pywt.dwt(s, wave)
+    cD_mod = pywt.threshold(cD, *args, **kwargs)
+    s_mod = pywt.idwt(cA, cD_mod, wave)
+    return s_mod
 
 
 def rgb_to_ppg(df: pd.DataFrame, filter='band', block_id='sample_id') -> pd.DataFrame:
