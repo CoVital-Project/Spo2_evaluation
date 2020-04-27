@@ -62,16 +62,26 @@ class Spo2Dataset(Dataset):
                     ppg.append(frame)
 
                     (grabbed, frame) = vidcap.read()
+                if os.path.isfile(video.parent / "data.json"):
+                    with open(video.parent / "data.json", "r") as f:
+                        ground_truth = json.load(f)
+                        if ground_truth["spo2"] == "Unkown":
+                            ground_truth["spo2"] = -1
+                            continue
 
-                with open(video.parent / "gt.json", "r") as f:
-                    ground_truth = json.load(f)
-                    if ground_truth["SpO2"] == "Unkown":
-                        ground_truth["SpO2"] = -1
-                        continue
+                    labels = torch.Tensor(
+                        [int(ground_truth["spo2"]), int(ground_truth["hr"])]
+                    )
+                elif os.path.isfile(video.parent / "gt.json"):
+                    with open(video.parent / "gt.json", "r") as f:
+                        ground_truth = json.load(f)
+                        if ground_truth["SpO2"] == "Unkown":
+                            ground_truth["SpO2"] = -1
+                            continue
 
-                labels = torch.Tensor(
-                    [int(ground_truth["SpO2"]), int(ground_truth["HR"])]
-                )
+                    labels = torch.Tensor(
+                        [int(ground_truth["SpO2"]), int(ground_truth["HR"])]
+                    )
                 self.videos_ppg.append(torch.Tensor(np.array(ppg)))
                 self.meta_list.append(meta)
                 self.labels_list.append(labels)

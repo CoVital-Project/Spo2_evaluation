@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, ConcatDataset
 import torch.optim as optim
 from preprocessing.data_loader import Spo2Dataset, spo2_collate_fn
 from sklearn.metrics import confusion_matrix
@@ -19,7 +19,6 @@ import pickle as pk
 from resnet import resnet18, resnet34, resnet50, resnet101, resnet152
 from VGG import vgg13bn, vgg16bn, vgg19bn
 from mobilenet_v2 import mobilenet_v2
-
 cuda = torch.cuda.is_available()
 # Utils
 
@@ -234,8 +233,13 @@ def run_experiment(
         print("Running %s" % model.arch)
 
         print("Loading Data..")
-        train_data = Spo2Dataset("nemcova_data/train")
-        test_data = Spo2Dataset("nemcova_data/test")
+        nemcova_train_data = Spo2Dataset("nemcova_data/train")
+        nemcova_test_data = Spo2Dataset("nemcova_data/test")
+        covital_train_data = Spo2Dataset("covital-data/covital-data-community")
+        covital_test_data = Spo2Dataset("covital-data/covital-data-clinical")
+
+        train_data = ConcatDataset([nemcova_train_data,covital_train_data ])
+        train_data = ConcatDataset([nemcova_test_data,covital_test_data ])
 
         train_loader = DataLoader(
             train_data,
