@@ -1,4 +1,4 @@
-from torch.utils.data import Dataset, DataLoader
+#from torch.utils.data import Dataset, DataLoader
 import cv2
 import numpy as np
 import torchvision
@@ -9,8 +9,8 @@ from threading import Thread
 from queue import Queue
 import time
 import pandas as pd
-import data_loader
-import utils
+from . import data_loader
+from . import utils
 
 import matplotlib.pyplot as plt
 

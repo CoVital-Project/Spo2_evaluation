@@ -1,5 +1,5 @@
 import cv2
-import wang_2017
+from spo2evaluation.modelling import wang_2017
 
 
 def main():
@@ -24,3 +24,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
