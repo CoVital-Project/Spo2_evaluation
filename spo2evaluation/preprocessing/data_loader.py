@@ -7,6 +7,7 @@ from pathlib import Path
 import cv2
 import abc
 
+
 def timing(f):
     def wrap(*args):
         time1 = time.time()

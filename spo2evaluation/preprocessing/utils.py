@@ -1,23 +1,26 @@
-from .data_loader_pytorch import Spo2DatasetPyTorch
-import pandas as pd
-from pathlib import Path
 import json
+from pathlib import Path
+
 import numpy as np
+
+import pandas as pd
+
+from .data_loader_pytorch import Spo2DatasetPyTorch
 
 
 def normalize_ppg(ppg):
     ppg_max = np.amax(ppg)
     ppg_min = np.amin(ppg)
-    
+
     if (ppg_max - ppg_min) == 0:
         return ppg
-    
+
     ppg = (ppg - ppg_min) / (ppg_max - ppg_min)
-    
+
     return ppg
 
 
-def dataset_to_dataframe(dataset: Spo2Dataset):
+def dataset_to_dataframe(dataset: Spo2DatasetPyTorch):
     """Transforms a Spo2Dataset object into a single pandas DataFrame.
 
     Parameters
@@ -65,18 +68,21 @@ def dataset_to_dataframe(dataset: Spo2Dataset):
     ordered_cols.remove("sample_id")
     df = df[[*ordered_cols, "sample_id"]]
 
-    df["sample_source"] = df["sample_id"].apply(lambda x: meta_dict[x]["video_source"])
+    df["sample_source"] = df["sample_id"].\
+        apply(lambda x: meta_dict[x]["video_source"])
 
     return df
 
 
 def ground_truth_dataframe(data_path="sample_data/"):
-    """Retrieves SpO2 and HR values from all `gt.json` files in a path as a DataFrame.
+    """Retrieves SpO2 and HR values from all `gt.json` files in a path as
+    a DataFrame.
 
     Parameters
     ----------
     data_path : str, optional
-        The path to the data you want to extract values for`, by default 'sample_data/'
+        The path to the data you want to extract values for`, by default
+        'sample_data/'
 
     Returns
     -------
