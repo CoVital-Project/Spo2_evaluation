@@ -21,7 +21,7 @@ def run_fast_scandir_json(dir):    # dir: str, ext: list
     subfolders, files = [], []
 
     for f in os.scandir(dir):
-        print("file", f)
+        #print("file", f)
         if f.is_dir():
             subfolders.append(f.path)
         if f.is_file():
@@ -42,10 +42,16 @@ def recursive_sanitizing_of_json(folder: str) -> None:
     '''
     # Get all json files 
     _, files = run_fast_scandir_json(folder)
+    n = 1
     for file in files:
+        print("Sanitizing file", n, "of", len(files))
+        n += 1
         with open(file) as json_file:
             data = json.load(json_file)
-            new_json = convert_old_json_format_to_new(data, False)
+            if "covital-data-clinical" in file:
+                new_json = convert_old_json_format_to_new(data, True)
+            else:
+                new_json = convert_old_json_format_to_new(data, False)
             
             path = Path(file).parent
             os.rename(file, os.path.join(path, "data_old_formal.json"))
