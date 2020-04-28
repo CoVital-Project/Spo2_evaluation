@@ -1,4 +1,4 @@
-from .data_loader import Spo2Dataset
+from .data_loader_pytorch import Spo2DatasetPyTorch
 import pandas as pd
 from pathlib import Path
 import json
