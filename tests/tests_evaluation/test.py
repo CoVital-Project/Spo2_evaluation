@@ -3,9 +3,13 @@ Documentation, License etc.
 
 @package Spo2_evaluation
 """
+
+import sys
+sys.path.append('../..')
+
 import numpy as np
 
-import blant_altman
+from spo2evaluation.evaluation import blant_altman
 
 # import the Python plotting tool
 from matplotlib import pyplot as plt

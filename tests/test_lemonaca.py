@@ -1,6 +1,10 @@
+import sys
+sys.path.append('..')
+
 import cv2
-import lamonaca_2015
-import nemcova_2020
+import spo2evaluation
+from spo2evaluation.modelling.lamonaca_and_nemcova import lamonaca_2015
+from spo2evaluation.modelling.lamonaca_and_nemcova import nemcova_2020
 
 
 def main():

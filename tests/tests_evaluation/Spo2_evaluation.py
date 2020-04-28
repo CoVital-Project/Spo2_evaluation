@@ -3,9 +3,10 @@ Documentation, License etc.
 
 @package Spo2_evaluation
 """
-
+import sys
+sys.path.append('../..')
+from spo2evaluation.evaluation import blant_altman
 from argparse import ArgumentParser
-import blant_altman
 
 
 def main():
