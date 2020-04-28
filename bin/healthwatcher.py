@@ -8,7 +8,7 @@ from spo2evaluation.preprocessing import data_loader_pandas
 
 
 if __name__== "__main__":
-    dataset = data_loader_pandas.Spo2DatasetPandas('test_data')
+    dataset = data_loader_pandas.Spo2DatasetPandas('data/covital-data-clinical/')
     
     for i in range(dataset.number_of_videos):
         df = dataset.get_video(i)
