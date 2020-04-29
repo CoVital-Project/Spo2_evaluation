@@ -15,9 +15,9 @@ def main():
     )
     args = parser.parse_args()
     data_folder = args.data_folder
-    while(data_folder == None):
+    while data_folder is None:
         data_folder = input("Folder to sanitize> ")
-    
+
     print("Launching the sanitization for", data_folder)
     data_sanitization.recursive_sanitizing_of_json(data_folder)
 
