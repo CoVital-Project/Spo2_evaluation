@@ -1,15 +1,10 @@
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import cv2
 import numpy as np
-import torchvision
-import os
 import json
 import torch
-from threading import Thread
-from queue import Queue
 import time
-from pathlib import Path
-import data_loader
+from . import data_loader
 
 
 def timing(f):
@@ -28,7 +23,7 @@ class Spo2DatasetPyTorch(Dataset, data_loader.Spo2Dataset):
         It preprocess the data in order to create a Dataset with the average and std of each channel per frame.
         The process is slow so it may take a while to create the Dataset when first initated.
     """
-    
+
     def __init__(self, data_path, file_type='mp4', crop=False, rescale=True):
         """
         Args:
@@ -57,10 +52,13 @@ class Spo2DatasetPyTorch(Dataset, data_loader.Spo2Dataset):
                         frame = self.rescale_frame(frame)
                     if crop:
                         frame = self.crop_frame(frame)
-                    blue_channel_mean, blue_channel_std, green_channel_mean, green_channel_std, red_channel_mean, red_channel_std = self.transform_faster(frame)
-                    tmp_array = np.array([[blue_channel_mean, blue_channel_std],
-                         [green_channel_mean, green_channel_std],
-                         [red_channel_mean, red_channel_std]])
+                    blue_channel_mean, blue_channel_std, green_channel_mean,\
+                        green_channel_std, red_channel_mean, red_channel_std\
+                        = self.transform_faster(frame)
+                    tmp_array = np.array([
+                        [blue_channel_mean, blue_channel_std],
+                        [green_channel_mean, green_channel_std],
+                        [red_channel_mean, red_channel_std]])
                     
                     ppg.append(tmp_array)
 
@@ -144,34 +142,11 @@ def spo2_collate_fn(batch):
             video = torch.cat([element[0], padding])
         else:
             video = element[0]
-        labels = element[2]
+        # labels = element[2]
         videos_tensor[i] = video
         labels_tensor[i] = element[2]
     return videos_tensor, labels_tensor, torch.Tensor(videos_length)
 
-
-if __name__ == "__main__":
-    DATADIR = Path('sample_data')
-    PERSIST = False
-
-    dataset = Spo2DatasetPyTorch(DATADIR)
-
-    if PERSIST:
-        # Persist Spo2Dataset object to a pickle for quick reload
-        persist_dir = DATADIR/'pickled'
-        print(f"Persisting dataset to {persist_dir}")
-        if not os.path.exists(persist_dir):
-            os.makedirs(persist_dir)
-        import pickle
-        with open(persist_dir/'spo2dataset.pkl', 'wb') as pkl_file:
-            pickle.dump(dataset, pkl_file)
-
-    dataloader = DataLoader(
-        dataset, batch_size=4, collate_fn=spo2_collate_fn)
-    for videos_batch, labels_batch, videos_lengths in dataloader:
-        print("Padded video (length, color, (mean,std)): ", videos_batch[0].shape)
-        print("Video original length: ", videos_lengths[0])
-        print("Labels (SpO2, HR): ", labels_batch[0])
 
 
     #def __len__(self):
