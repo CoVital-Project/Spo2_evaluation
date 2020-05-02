@@ -1,5 +1,5 @@
 import sys
-sys.path.append('..')
+sys.path.append('../..')
 from spo2evaluation.preprocessing import data_sanitization
 from argparse import ArgumentParser
 
