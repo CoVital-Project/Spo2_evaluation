@@ -30,17 +30,18 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
         """
         self.data_path = data_path
         self.path_samples = os.path.join(self.data_path, "sample_data")
-        self.path_gt = os.path.join(self.data_path, "sample_data")
+        self.path_gt = os.path.join(self.data_path, "ground_truths_sample")
+        self.path_meta = os.path.join(self.data_path, "meta")
         if self.is_pickled():
             print("Data was already pickled. Loading previously pickled dataset.")
             # TODO: LOAD THE DATA FROM PICKLES
-
+            self.load_pickle()
         else:
 
             self.video_folders = [folder for folder in os.listdir(data_path) if
                                   os.path.isdir(os.path.join(data_path, folder))]
             print("v", self.video_folders)
-            self.number_of_videos = len(self.video_folders)
+            # self.number_of_videos = len(self.video_folders)
             # print(self.number_of_videos)
 
             data_list_red_mean = []
@@ -52,6 +53,7 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
             data_frame_number = []
             data_video_id = []
             data_sample_source = []
+            meta = []
 
             data_sample_label_id = []
             data_label_source = []
@@ -82,8 +84,9 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
                                               if file_name.endswith('mp4')][0])
 
                 vidcap = cv2.VideoCapture(video_file)
-                meta = {}
-                meta['video_fps'] = vidcap.get(cv2.CAP_PROP_FPS)
+
+                meta.append(vidcap.get(cv2.CAP_PROP_FPS))
+
                 (grabbed, frame) = vidcap.read()
                 frame_count = 0
                 while grabbed:
@@ -150,10 +153,15 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
             self.ground_truths_sample = pd.DataFrame(data_list_labels,
                                                      column_labels).T
 
+            self.meta = pd.DataFrame([data_sample_label_id, meta], ["sample_id", "fps"]).T
+
+            self.number_of_videos = self.sample_data['sample_id'].max()
+
             # self.data = self.data.T
             print(self.sample_data)
             # self.data = self.data.T
             print(self.ground_truths_sample)
+            print(self.meta)
 
     def print_pgg(self, video_id):
         plt.figure()
@@ -198,19 +206,28 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
         # plt.grid(True)
         # plt.title("PPG signal for the color green")
 
-    # def get_video(self, index):
-        # index_frame = 9 * index
-        # return self.data.iloc[index_frame:index_frame+9]
+    def get_video(self, index):
+        return (self.sample_data.loc[self.sample_data['sample_id'] == index],
+                self.ground_truths_sample.loc[self.ground_truths_sample['sample_id'] == index],
+                self.meta.loc[self.meta['sample_id'] == index])
 
     def pickle_data(self):
-        # path_samples = os.path.join(self.data_path, "sample_data")
-        # path_gt = os.path.join(self.data_path, "sample_data")
         self.sample_data.to_pickle(self.path_samples)
         self.ground_truths_sample.to_pickle(self.path_gt)
-        print("Data pickled in", self.path_samples, "and", self.path_gt)
+        self.meta.to_pickle(self.path_meta)
+
+    def load_pickle(self):
+        print("LOAD")
+        self.sample_data = pd.read_pickle(self.path_samples)
+        self.ground_truths_sample = pd.read_pickle(self.path_gt)
+        self.meta = pd.read_pickle(self.path_meta)
+        # print("yo\n", self.sample_data.loc[self.sample_data['sample_id'] == 1])
+        self.number_of_videos = self.sample_data['sample_id'].max()
+        print("Loaded", self.number_of_videos)
 
     def is_pickled(self) -> bool:
         if os.path.isfile(self.path_samples) and os.access(self.path_samples, os.R_OK) \
-                and os.path.isfile(self.path_gt) and os.access(self.path_gt, os.R_OK):
+                and os.path.isfile(self.path_gt) and os.access(self.path_gt, os.R_OK) \
+                and os.path.isfile(self.path_meta) and os.access(self.path_meta, os.R_OK):
             return True
         return False

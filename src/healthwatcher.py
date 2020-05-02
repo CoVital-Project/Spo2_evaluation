@@ -8,7 +8,6 @@ from spo2evaluation.preprocessing import data_loader_pandas
 
 
 if __name__ == "__main__":
-    
     parser = ArgumentParser()
     parser.add_argument(
         "-d",
@@ -29,23 +28,24 @@ if __name__ == "__main__":
 
     if dataset.is_pickled():
         print("Data was already pickled")
+        print(dataset.sample_data)
+        print(dataset.ground_truths_sample)
+        print(dataset.meta)
     else:
         print("Picling the data")
         dataset.pickle_data()
 
-    # for i in range(dataset.number_of_videos):
-    #     df = dataset.get_video(i)
-    #
-    #     df = df.T
-    #
-    #     blue = df['blue'].to_numpy()
-    #     red = df['red'].to_numpy()
-    #     green = df['green'].to_numpy()
-    #     blue_std = df['blue std'].to_numpy()
-    #     red_std = df['red std'].to_numpy()
-    #     green_std = df['green std'].to_numpy()
-    #     fps = df['fps'][0]
-    #
-    #     spo2 = healthwatcher.health_watcher(blue, blue_std, red, red_std, fps,
-    #                                         smooth=False)
-    #     print(spo2)
+    for i in range(dataset.number_of_videos):
+        sample, gt, meta = dataset.get_video(i)
+
+        blue = sample['mean_blue'].to_numpy()
+        red = sample['mean_red'].to_numpy()
+        green = sample['mean_green'].to_numpy()
+        blue_std = sample['std_blue'].to_numpy()
+        red_std = sample['std_red'].to_numpy()
+        green_std = sample['std_green'].to_numpy()
+        fps = meta['fps'].iloc[0]
+
+        spo2 = healthwatcher.health_watcher(blue, blue_std, red, red_std, fps,
+                                            smooth=False)
+        print(spo2)
