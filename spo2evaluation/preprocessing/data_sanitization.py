@@ -16,11 +16,9 @@ class DataFormatCovital(enum.Enum):
 def format(file: str) -> bool:
     with open(file) as json_file:
         data = json.load(json_file)
-    try:
-        data['survey']
-    except Exception:
-        return DataFormatCovital.old
-    return DataFormatCovital.current
+    if 'survey' in data:
+        return DataFormatCovital.current
+    return DataFormatCovital.old
 
 
 def run_fast_scandir_json(
@@ -38,9 +36,10 @@ def run_fast_scandir_json(
         if f.is_file():
             if f.name == "data.json":
                 if dataformat is None or dataformat == format(f):
+                    print("Adding", format(f), " with ", dataformat)
                     files.append(f.path)
     for dir in list(subfolders):
-        sf, f = run_fast_scandir_json(dir)
+        sf, f = run_fast_scandir_json(dir, dataformat)
         subfolders.extend(sf)
         files.extend(f)
     return subfolders, files
@@ -59,7 +58,7 @@ def recursive_sanitizing_of_json(folder: str) -> None:
         n += 1
         with open(file) as json_file:
             data = json.load(json_file)
-            if "covital-data-clinical" in file:
+            if "clinical" in file:
                 new_json = convert_old_json_format_to_new(data, True)
             else:
                 new_json = convert_old_json_format_to_new(data, False)

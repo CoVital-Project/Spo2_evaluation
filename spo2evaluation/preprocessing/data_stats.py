@@ -38,7 +38,7 @@ class DatasetStatistics(object):
             folder, dataformat=data_sanitization.DataFormatCovital.current)
         n = 1
         for file in data_files:
-            print("Checking file", n, "of", len(data_files))
+            print("Checking file", n, "of", len(data_files), ":", file)
             n += 1
             with open(file) as json_file:
                 data = json.load(json_file)
@@ -49,7 +49,7 @@ class DatasetStatistics(object):
                     )
                 # print(datetimeobject)
                 self.date.append(datetimeobject.date())
-                if "covital-data-clinical" in file:
+                if "clinical" in file:
                     self.type.append(DataSourceCovital.clinical)
                 else:
                     self.type.append(DataSourceCovital.community)
@@ -101,9 +101,10 @@ class DatasetStatistics(object):
         clinical_date = list(itertools.compress(self.date, mask_clinical))
 
         plot.hist([community_date, clinical_date], bins=bins_days,
-                  align="right", rwidth=0.1,
+                  align="right", rwidth=0.5,
                   label=['community', 'clinical'])
         plot.title("samples per day and dataset")
+        plot.xticks(rotation=90)
         plot.legend(loc='upper left')
 
         plot.tight_layout()
