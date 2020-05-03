@@ -6,6 +6,7 @@ import numpy as np
 import json
 import torch
 import time
+import pathlib as path
 from . import data_loader
 
 
@@ -33,7 +34,7 @@ class Spo2DatasetPyTorch(Dataset, data_loader.Spo2Dataset):
             file_type (string): File extentions to look for with videos (default: mp4)
             rescale (bool): Whether to downscale videos 50%
         """
-        self.data_path = Path(data_path)
+        self.data_path = path.Path(data_path)
         # Recursively find all files of file_type in the data path
         self.video_folders = list(self.data_path.glob(f'**/*.{file_type}'))
         self.videos_ppg = []
