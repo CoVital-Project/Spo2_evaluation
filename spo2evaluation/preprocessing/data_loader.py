@@ -158,9 +158,7 @@ class Spo2Dataset(abc.ABC):
             # ]
         # )
 
-    @abc.abstractmethod
-    def pickle_data(self):
-        pass
+
 
     #def __len__(self):
         #return len(self.videos_ppg)
