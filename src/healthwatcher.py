@@ -24,20 +24,24 @@ if __name__ == "__main__":
     path_gt = os.path.join(data_folder, "sample_data")
 
     print("Loading dataset. this will take a while")
-    dataset = data_loader_pandas.Spo2DatasetPandas(data_folder, read_pickle=False)
+    dataset = data_loader_pandas.Spo2DatasetPandas(data_folder, read_pickle=True)
 
     if dataset.is_pickled():
         print("Data was already pickled")
-        print(dataset.sample_data)
-        print(dataset.ground_truths_sample)
-        print(dataset.meta)
+        # print(dataset.sample_data)
+        # print(dataset.ground_truths_sample)
+        # print(dataset.meta)
     else:
         print("Pickling the data")
         dataset.pickle_data()
+
+    spo2_predictions = []
 
     for i in range(dataset.number_of_videos):
         sample, gt, meta = dataset.get_video(i)
         fps = meta['fps'].iloc[0]
 
         spo2 = healthwatcher.predict_spo2_from_df(sample, fps=fps, smooth=False)
-        print(f"Predicted SpO2: {spo2: .2f}")
+        spo2_predictions.append(spo2)
+
+    print("Predictions:", spo2_predictions)
