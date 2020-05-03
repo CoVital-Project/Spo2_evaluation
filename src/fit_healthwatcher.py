@@ -19,8 +19,11 @@ mean_red = df['mean_red'].to_numpy()
 std_red = df['std_red'].to_numpy()
 mean_blue = df['mean_blue'].to_numpy()
 std_blue = df['std_blue'].to_numpy()
+mean_green = df['mean_green'].to_numpy()
+std_green = df['std_green'].to_numpy()
 
-X = (std_red / mean_red) / (std_blue / mean_blue).reshape(-1,1)
+X = np.array([mean_red, std_red, mean_blue, std_blue, mean_green]).T # <-- 'new' method, linear regression on all features
+# X = (std_red / mean_red) / (std_blue / mean_blue).reshape(-1,1) <-- healthwatcher's method, aggregates all into 1
 
 split=int(len(X)*0.75)
 
@@ -43,6 +46,9 @@ plt.scatter(x=y_pred, y=y_test)
 plt.xlabel('predictions')
 plt.ylabel('ground truth values')
 plt.show()
-print(y_pred-y_test)
+import time
+
+pd.DataFrame(data={'spo2_gt': y_test.reshape(1,-1)[0], 'spo2_pred': y_pred.reshape(1,-1)[0]}).to_csv(f'../results/hw-fit-{int(time.time())}')
+
 
 
