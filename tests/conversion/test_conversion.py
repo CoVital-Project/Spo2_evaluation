@@ -10,14 +10,14 @@ from spo2evaluation.preprocessing import data_sanitization
 
 
 def test_detect_format():
-    assert(data_sanitization.is_old_format('data_for_test_old_format.json') == True)
+    assert(data_sanitization.format('data_for_test_old_format.json')
+           == data_sanitization.DataFormatCovital.old)
 
 
 def test_conversion():
     with open('data_for_test_old_format.json') as json_file:
         data = json.load(json_file)
-        #print("Old dat:\n", data['spo2Device'])
-        
+        # print("Old dat:\n", data['spo2Device'])
 
     new_json = data_sanitization.convert_old_json_format_to_new(data, True)
 
