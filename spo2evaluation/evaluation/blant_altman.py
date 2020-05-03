@@ -130,7 +130,8 @@ def BlandAltmanPlot(Xdata, Ydata, fig_num=None):
 
     if fig_num != None:
 
-        plt.figure(fig_num)
+
+        plt.figure()
 
         ##Set axis limits, this will account for the maximum average difference and the upper and lower
         ##limits of agreement, and all data points.
@@ -151,12 +152,14 @@ def BlandAltmanPlot(Xdata, Ydata, fig_num=None):
             ms="8",
             lw="2",
         )
-        # Add the mean, upper and lower levels of agreement to the Bland-Altman plot.
+        # Add the mean, upper and lower levels of agrespo2evaluation/evaluation/blant_altman.pyement to the Bland-Altman plot.
         plt.axhline(y=mean_difference, lw="2", color="k", ls="dashed")
         plt.axhline(y=upper_limit, lw="2", color="k", ls="dashed")
         plt.axhline(y=lower_limit, lw="2", color="k", ls="dashed")
         # Horizontal axis label
-        plt.xlabel("Average difference", fontsize="16")
+        plt.xlabel("Original SPO2 value", fontsize="16")
         # Vertical axis label
         plt.ylabel("Difference", fontsize="16")
+        plt.xlim(min(Average), max(Average))
+        plt.show()
     return (mean_difference, std_difference, upper_limit, lower_limit)
