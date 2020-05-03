@@ -155,7 +155,7 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
 
             self.meta = pd.DataFrame([data_sample_label_id, meta], ["sample_id", "fps"]).T
 
-            self.number_of_videos = self.sample_data['sample_id'].max()
+            self.number_of_videos = len(self.meta.index)
 
             # self.data = self.data.T
             print(self.sample_data)
@@ -222,7 +222,7 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
         self.ground_truths_sample = pd.read_pickle(self.path_gt)
         self.meta = pd.read_pickle(self.path_meta)
         # print("yo\n", self.sample_data.loc[self.sample_data['sample_id'] == 1])
-        self.number_of_videos = self.sample_data['sample_id'].max()
+        self.number_of_videos = len(self.meta.index)
         print("Loaded", self.number_of_videos)
 
     def is_pickled(self) -> bool:
