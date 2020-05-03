@@ -1,3 +1,7 @@
+*.pyc
+*.kate-swp
+*.kdev4
+
 # Project-specific ignores
 data/*
 Pipfile
@@ -149,3 +153,4 @@ cython_debug/
 # static files generated from Django application using `collectstatic`
 media
 static
+>>>>>>> master
