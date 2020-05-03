@@ -17,7 +17,8 @@ def test_detect_format():
 
 
 def test_conversion():
-    with open('data_for_test_old_format.json') as json_file:
+    pathfile = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(pathfile, 'data_for_test_old_format.json')) as json_file:
         data = json.load(json_file)
         # print("Old dat:\n", data['spo2Device'])
 
