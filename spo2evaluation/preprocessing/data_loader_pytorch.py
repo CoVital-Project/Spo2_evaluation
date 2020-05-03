@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from torch.utils.data import Dataset
 import cv2
 import numpy as np
