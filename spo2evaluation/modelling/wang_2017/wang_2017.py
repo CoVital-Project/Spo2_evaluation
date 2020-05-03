@@ -3,7 +3,7 @@ import scipy.signal as signal
 import numpy as np
 import math
 
-import utils
+from . import utils
 import matplotlib.pyplot as plt
 import scipy
 

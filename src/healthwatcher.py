@@ -5,6 +5,8 @@ from argparse import ArgumentParser
 import spo2evaluation
 from spo2evaluation.modelling.healthwatcher import healthwatcher
 from spo2evaluation.preprocessing import data_loader_pandas
+import pandas as pd
+import time
 
 
 if __name__ == "__main__":
@@ -35,6 +37,12 @@ if __name__ == "__main__":
         print("Picling the data")
         dataset.pickle_data()
 
+    predictions = {'id': [],
+                 'spo2_gt': [],
+                 'spo2_pred': [],
+                 }
+
+
     for i in range(dataset.number_of_videos):
         sample, gt, meta = dataset.get_video(i)
 
@@ -48,4 +56,16 @@ if __name__ == "__main__":
 
         spo2 = healthwatcher.health_watcher(blue, blue_std, red, red_std, fps,
                                             smooth=False)
-        print(spo2)
+
+        print(gt['path'])
+        survey_id = gt['path'].iloc[0].split('/')[-1].split('=')[-1]
+
+
+        predictions['id'].append(survey_id)
+        predictions['spo2_gt'].append(gt['SpO2'].iloc[0])
+        predictions['spo2_pred'].append(spo2)
+
+    results_df = pd.DataFrame(predictions)
+
+    results_df.to_csv(f'../results/healthwatcher_{int(time.time())}.csv')
+

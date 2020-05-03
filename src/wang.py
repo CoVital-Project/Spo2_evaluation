@@ -1,5 +1,7 @@
 import cv2
-from spo2evaluation.modelling import wang_2017
+import sys
+sys.path.append('..') # expected to be run from inside src/
+from spo2evaluation.modelling.wang_2017 import wang_2017
 
 
 def main():
