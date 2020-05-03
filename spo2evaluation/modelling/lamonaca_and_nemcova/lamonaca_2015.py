@@ -8,7 +8,7 @@ import scipy.signal as signal
 import numpy as np
 import math
 
-import utils
+from . import utils
 
 
 class Camera_specs(object):
