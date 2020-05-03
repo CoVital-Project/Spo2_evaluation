@@ -8,8 +8,8 @@ def health_watcher(ppg_blue, ppg_blue_std, ppg_red, ppg_red_std, fps, smooth = T
     #print(meta)
     #fps = meta['video_fps']
     
-    A=100 # From "determination of spo2 and heart-rate using smartphone camera
-    B=5
+    A = 100 # From "determination of spo2 and heart-rate using smartphone camera
+    B = 5
 
     #TODO curve fitting for A and B. If we have more data, we can do a linear regression that best fits all patients
     #TODO Add all mp4 from figshare
@@ -26,9 +26,9 @@ def health_watcher(ppg_blue, ppg_blue_std, ppg_red, ppg_red_std, fps, smooth = T
 
     x = [i for i in range(len(spo2_smooth))]
     
-    plt.figure()
-    plt.plot(x, spo2_smooth)
-    plt.show()
+    # plt.figure()
+    # plt.plot(x, spo2_smooth)
+    # plt.show()
     
     return spo2_smooth.mean()
 
