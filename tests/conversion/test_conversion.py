@@ -10,8 +10,10 @@ from spo2evaluation.preprocessing import data_sanitization
 
 
 def test_detect_format():
-    assert(data_sanitization.format('data_for_test_old_format.json')
-           == data_sanitization.DataFormatCovital.old)
+    pathfile = os.path.dirname(os.path.abspath(__file__))
+    assert(data_sanitization.format(
+            os.path.join(pathfile, 'data_for_test_old_format.json')
+        ) == data_sanitization.DataFormatCovital.old)
 
 
 def test_conversion():
