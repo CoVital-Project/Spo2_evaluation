@@ -14,6 +14,8 @@ from . import data_loader
 from . import utils
 
 
+from tqdm import tqdm
+
 class Spo2DatasetPandas(data_loader.Spo2Dataset):
     """Spo2Dataset dataset using pandas.
         It preprocess the data in order to create a Dataset with the average
@@ -23,7 +25,7 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
         those element and video are stacked up.
     """
 
-    def __init__(self, data_path):
+    def __init__(self, data_path, read_pickle=False):
         """
         Args:
             data_path (string): Path to the data folder.
@@ -32,7 +34,7 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
         self.path_samples = os.path.join(self.data_path, "sample_data")
         self.path_gt = os.path.join(self.data_path, "ground_truths_sample")
         self.path_meta = os.path.join(self.data_path, "meta")
-        if self.is_pickled():
+        if read_pickle and self.is_pickled():
             print("Data was already pickled. Loading previously pickled dataset.")
             # TODO: LOAD THE DATA FROM PICKLES
             self.load_pickle()
@@ -40,9 +42,6 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
 
             self.video_folders = [folder for folder in os.listdir(data_path) if
                                   os.path.isdir(os.path.join(data_path, folder))]
-            print("v", self.video_folders)
-            # self.number_of_videos = len(self.video_folders)
-            # print(self.number_of_videos)
 
             data_list_red_mean = []
             data_list_blue_mean = []
@@ -62,7 +61,7 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
 
             # column = []
             nb_video = 0
-            for video in self.video_folders:
+            for video in tqdm(self.video_folders):
 
                 ppg_red_mean = list()
                 ppg_green_mean = list()
@@ -73,19 +72,20 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
                 frame_numbers = list()
                 video_id = list()
                 sample_source = list()
-                print("Loading video:", nb_video)
                 # print(data_list)
                 ppg = []
                 video_path = os.path.join(self.data_path, video)
+                try:
+                    video_file = os.path.join(video_path,
+                                            [file_name for file_name in
+                                                os.listdir(video_path)
+                                                if file_name.endswith('mp4')][0])
 
-                video_file = os.path.join(video_path,
-                                          [file_name for file_name in
-                                              os.listdir(video_path)
-                                              if file_name.endswith('mp4')][0])
+                    vidcap = cv2.VideoCapture(video_file)
 
-                vidcap = cv2.VideoCapture(video_file)
+                except Exception as e:
+                    print(e)
 
-                meta.append(vidcap.get(cv2.CAP_PROP_FPS))
 
                 (grabbed, frame) = vidcap.read()
                 frame_count = 0
@@ -106,8 +106,8 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
 
                     ppg.append(frame)
                     (grabbed, frame) = vidcap.read()
-                    if frame_count % 100 == 0 and frame_count != 0:
-                        print("Frame:", frame_count)
+                    # if frame_count % 100 == 0 and frame_count != 0:
+                    #     print("Frame:", frame_count)
                         # break
                     frame_count += 1
                 with open(os.path.join(video_path, 'data.json'), 'r') as f:
@@ -153,7 +153,8 @@ class Spo2DatasetPandas(data_loader.Spo2Dataset):
             self.ground_truths_sample = pd.DataFrame(data_list_labels,
                                                      column_labels).T
 
-            self.meta = pd.DataFrame([data_sample_label_id, meta], ["sample_id", "fps"]).T
+            self.meta = pd.DataFrame([data_sample_label_id, meta], [
+                                     "sample_id", "fps"]).T
 
             self.number_of_videos = self.sample_data['sample_id'].max()
 
